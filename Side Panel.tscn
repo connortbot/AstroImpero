@@ -1,0 +1,411 @@
+[gd_scene load_steps=18 format=2]
+
+[ext_resource path="res://GUI_Assets/Background.png" type="Texture" id=1]
+[ext_resource path="res://GUI_Assets/SettingsButton.png" type="Texture" id=2]
+[ext_resource path="res://GUI_Assets/MenuButton.png" type="Texture" id=3]
+[ext_resource path="res://Side Panel.gd" type="Script" id=4]
+[ext_resource path="res://GUI_Assets/DATA ANALYSIS.png" type="Texture" id=5]
+[ext_resource path="res://GUI_Assets/PlanetsButton.png" type="Texture" id=6]
+[ext_resource path="res://GUI_Assets/ShipsButton.png" type="Texture" id=7]
+[ext_resource path="res://GUI_Assets/data_terminalbottom.png" type="Texture" id=8]
+[ext_resource path="res://Nova_Light_Ultra.ttf" type="DynamicFontData" id=9]
+
+[sub_resource type="DynamicFont" id=1]
+size = 100
+font_data = ExtResource( 9 )
+
+[sub_resource type="StyleBoxFlat" id=2]
+bg_color = Color( 0.109804, 0.109804, 0.109804, 1 )
+
+[sub_resource type="DynamicFont" id=3]
+size = 100
+use_mipmaps = true
+use_filter = true
+font_data = ExtResource( 9 )
+
+[sub_resource type="DynamicFont" id=4]
+size = 55
+use_mipmaps = true
+use_filter = true
+font_data = ExtResource( 9 )
+
+[sub_resource type="DynamicFont" id=5]
+size = 200
+use_mipmaps = true
+use_filter = true
+font_data = ExtResource( 9 )
+
+[sub_resource type="Animation" id=6]
+length = 0.6
+tracks/0/type = "value"
+tracks/0/path = NodePath("InspectPanel:rect_position")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/keys = {
+"times": PoolRealArray( 0, 0.6 ),
+"transitions": PoolRealArray( 0.5, 1 ),
+"update": 0,
+"values": [ Vector2( 0, 0 ), Vector2( 1074, 0 ) ]
+}
+tracks/1/type = "value"
+tracks/1/path = NodePath("Button:rect_position")
+tracks/1/interp = 1
+tracks/1/loop_wrap = true
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/keys = {
+"times": PoolRealArray( 0, 0.6 ),
+"transitions": PoolRealArray( 0.5, 1 ),
+"update": 0,
+"values": [ Vector2( -42, 567 ), Vector2( 1030, 567 ) ]
+}
+
+[sub_resource type="Animation" id=7]
+length = 0.6
+tracks/0/type = "value"
+tracks/0/path = NodePath("InspectPanel:rect_position")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/keys = {
+"times": PoolRealArray( 0, 0.6 ),
+"transitions": PoolRealArray( 0.5, 1 ),
+"update": 0,
+"values": [ Vector2( 1074, 0 ), Vector2( 0, 0 ) ]
+}
+tracks/1/type = "value"
+tracks/1/path = NodePath("Button:rect_position")
+tracks/1/interp = 1
+tracks/1/loop_wrap = true
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/keys = {
+"times": PoolRealArray( 0, 0.6 ),
+"transitions": PoolRealArray( 0.5, 1 ),
+"update": 0,
+"values": [ Vector2( 1030, 567 ), Vector2( -42, 567 ) ]
+}
+
+[sub_resource type="StyleBoxFlat" id=8]
+bg_color = Color( 1, 1, 1, 1 )
+
+[node name="Side Panel" type="Control"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+margin_left = -0.456329
+margin_top = 1.22693
+margin_right = 532.544
+margin_bottom = 458.227
+script = ExtResource( 4 )
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="InspectPanel" type="Control" parent="."]
+margin_right = 40.0
+margin_bottom = 40.0
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="TextureRect" type="TextureRect" parent="InspectPanel"]
+margin_left = 12.0
+margin_top = 317.0
+margin_right = 1932.0
+margin_bottom = 1397.0
+rect_scale = Vector2( 0.545, 0.64 )
+mouse_filter = 2
+texture = ExtResource( 1 )
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="TerminalTop" type="TextureRect" parent="InspectPanel"]
+margin_left = 10.587
+margin_top = 274.422
+margin_right = 1075.59
+margin_bottom = 379.422
+texture = ExtResource( 5 )
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="PlanetsButton-" type="TextureButton" parent="InspectPanel"]
+margin_left = 10.9806
+margin_top = 393.532
+margin_right = 238.981
+margin_bottom = 627.532
+rect_pivot_offset = Vector2( 114, 120 )
+texture_normal = ExtResource( 6 )
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="ShipsButton-" type="TextureButton" parent="InspectPanel"]
+margin_left = 11.5154
+margin_top = 641.887
+margin_right = 239.515
+margin_bottom = 882.887
+rect_pivot_offset = Vector2( 114, 120 )
+texture_normal = ExtResource( 7 )
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="TerminalBottom" type="TextureRect" parent="InspectPanel"]
+margin_left = 10.3221
+margin_top = 898.275
+margin_right = 1075.33
+margin_bottom = 1003.28
+rect_scale = Vector2( 1, 1.75 )
+texture = ExtResource( 8 )
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="TitleLabel" type="Label" parent="InspectPanel"]
+margin_left = 525.131
+margin_top = 334.494
+margin_right = 797.131
+margin_bottom = 420.494
+grow_horizontal = 0
+custom_fonts/font = SubResource( 1 )
+custom_colors/font_color = Color( 0.588235, 0.623529, 0.996078, 1 )
+text = "SECTOR XXX"
+align = 1
+valign = 1
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="DataWindow" type="Control" parent="InspectPanel"]
+margin_left = 459.738
+margin_top = 320.389
+margin_right = 499.738
+margin_bottom = 360.389
+rect_scale = Vector2( 0.45, 0.45 )
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="ScrollContainer" type="ScrollContainer" parent="InspectPanel/DataWindow"]
+anchor_left = 1.52588e-06
+anchor_right = 1.52588e-06
+margin_left = -446.0
+margin_top = 250.0
+margin_right = 1334.0
+margin_bottom = 1343.0
+rect_min_size = Vector2( 1780, 1093 )
+scroll_horizontal_enabled = false
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="VBoxContainer" type="VBoxContainer" parent="InspectPanel/DataWindow/ScrollContainer"]
+margin_bottom = 8000.0
+rect_min_size = Vector2( 0, 8000 )
+mouse_filter = 2
+size_flags_vertical = 3
+custom_constants/separation = 175
+
+[node name="Interactions" type="HBoxContainer" parent="InspectPanel/DataWindow"]
+margin_left = -384.279
+margin_top = 1365.03
+margin_right = 1319.72
+margin_bottom = 1515.03
+custom_constants/separation = 10
+alignment = 1
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="Build" type="Button" parent="InspectPanel/DataWindow/Interactions"]
+margin_left = 236.0
+margin_right = 536.0
+margin_bottom = 150.0
+rect_min_size = Vector2( 300, 0 )
+custom_styles/normal = SubResource( 2 )
+custom_fonts/font = SubResource( 3 )
+text = "BUILD"
+
+[node name="View" type="Button" parent="InspectPanel/DataWindow/Interactions"]
+margin_left = 546.0
+margin_right = 846.0
+margin_bottom = 150.0
+rect_min_size = Vector2( 300, 0 )
+custom_styles/normal = SubResource( 2 )
+custom_fonts/font = SubResource( 3 )
+text = "VIEW"
+
+[node name="Dispatch" type="Button" parent="InspectPanel/DataWindow/Interactions"]
+margin_left = 856.0
+margin_right = 1156.0
+margin_bottom = 150.0
+rect_min_size = Vector2( 300, 0 )
+custom_styles/normal = SubResource( 2 )
+custom_fonts/font = SubResource( 3 )
+text = "DISPATCH∂"
+
+[node name="Invade" type="Button" parent="InspectPanel/DataWindow/Interactions"]
+margin_left = 1166.0
+margin_right = 1466.0
+margin_bottom = 150.0
+rect_min_size = Vector2( 300, 0 )
+custom_styles/normal = SubResource( 2 )
+custom_fonts/font = SubResource( 3 )
+text = "INVADE"
+
+[node name="Settings" type="Control" parent="."]
+margin_right = 40.0
+margin_bottom = 40.0
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="PanSens" type="Label" parent="Settings"]
+margin_left = 771.254
+margin_top = 38.8329
+margin_right = 953.254
+margin_bottom = 86.833
+custom_fonts/font = SubResource( 4 )
+custom_colors/font_color = Color( 0.588235, 0.623529, 0.996078, 1 )
+text = "Pan Sensitivity"
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="PanSensSlider" type="HSlider" parent="Settings"]
+margin_left = 780.0
+margin_top = 84.0
+margin_right = 944.0
+margin_bottom = 108.0
+min_value = 0.1
+max_value = 6.0
+step = 0.1
+value = 2.0
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="ZoomSens" type="Label" parent="Settings"]
+margin_left = 761.627
+margin_top = 114.889
+margin_right = 964.627
+margin_bottom = 162.889
+custom_fonts/font = SubResource( 4 )
+custom_colors/font_color = Color( 0.588235, 0.623529, 0.996078, 1 )
+text = "Zoom Sensitivity"
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="ZoomSensSlider" type="HSlider" parent="Settings"]
+margin_left = 779.519
+margin_top = 159.575
+margin_right = 943.519
+margin_bottom = 183.575
+min_value = 0.1
+max_value = 6.0
+step = 0.1
+value = 3.0
+
+[node name="MenuButton-" type="TextureButton" parent="."]
+margin_left = 11.1302
+margin_top = 12.5302
+margin_right = 239.13
+margin_bottom = 68.5302
+rect_pivot_offset = Vector2( 114, 28 )
+texture_normal = ExtResource( 3 )
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="SettingsButton-" type="TextureButton" parent="."]
+margin_left = 11.4354
+margin_top = 80.3908
+margin_right = 239.435
+margin_bottom = 136.391
+rect_pivot_offset = Vector2( 114, 28 )
+texture_normal = ExtResource( 2 )
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="HoverWindow" type="TextureRect" parent="."]
+visible = false
+modulate = Color( 1, 1, 1, 0.486275 )
+margin_left = 1.70295
+margin_top = 2.38188
+margin_right = 1921.7
+margin_bottom = 1082.39
+rect_scale = Vector2( 0.086, 0.2 )
+texture = ExtResource( 1 )
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="VBoxContainer" type="VBoxContainer" parent="HoverWindow"]
+margin_left = 61.822
+margin_top = 55.0674
+margin_right = 677.822
+margin_bottom = 1190.07
+rect_scale = Vector2( 2.222, 0.862 )
+custom_constants/separation = 70
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="Hover1" type="Label" parent="HoverWindow/VBoxContainer"]
+margin_right = 790.0
+margin_bottom = 171.0
+custom_fonts/font = SubResource( 5 )
+text = "Garrisons: 5"
+
+[node name="Hover2" type="Label" parent="HoverWindow/VBoxContainer"]
+margin_top = 241.0
+margin_right = 790.0
+margin_bottom = 412.0
+custom_fonts/font = SubResource( 5 )
+text = "Metal Mines: 50"
+
+[node name="Hover3" type="Label" parent="HoverWindow/VBoxContainer"]
+margin_top = 482.0
+margin_right = 790.0
+margin_bottom = 653.0
+custom_fonts/font = SubResource( 5 )
+text = "Energy Mines: 50"
+
+[node name="Hover4" type="Label" parent="HoverWindow/VBoxContainer"]
+margin_top = 723.0
+margin_right = 790.0
+margin_bottom = 894.0
+custom_fonts/font = SubResource( 5 )
+text = "Fuel Mines: 50"
+
+[node name="Hover5" type="Label" parent="HoverWindow/VBoxContainer"]
+margin_top = 964.0
+margin_right = 790.0
+margin_bottom = 1135.0
+custom_fonts/font = SubResource( 5 )
+text = "Stations: 50"
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="."]
+anims/in = SubResource( 6 )
+anims/out = SubResource( 7 )
+
+[node name="Button" type="Button" parent="."]
+margin_left = -42.0
+margin_top = 567.0
+margin_right = 11.0
+margin_bottom = 699.0
+custom_styles/normal = SubResource( 8 )
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[connection signal="pressed" from="InspectPanel/DataWindow/Interactions/Dispatch" to="." method="_on_Dispatch_pressed"]
+[connection signal="pressed" from="InspectPanel/DataWindow/Interactions/Invade" to="." method="_on_Invade_pressed"]
+[connection signal="pressed" from="Button" to="." method="_on_Button_pressed"]

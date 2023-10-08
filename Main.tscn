@@ -7,9 +7,9 @@
 [ext_resource path="res://Main.gd" type="Script" id=5]
 [ext_resource path="res://GUI_Assets/Background.png" type="Texture" id=6]
 [ext_resource path="res://PopupWindow.tscn" type="PackedScene" id=12]
-[ext_resource path="res://Nova_Light_Ultra.ttf" type="DynamicFontData" id=14]
-[ext_resource path="res://LCARSText.tres" type="DynamicFont" id=16]
-[ext_resource path="res://Edge of the Galaxy.tres" type="DynamicFont" id=17]
+[ext_resource path="res://Fonts/Nova_Light_Ultra.ttf" type="DynamicFontData" id=14]
+[ext_resource path="res://Fonts/LCARSText.tres" type="DynamicFont" id=16]
+[ext_resource path="res://Fonts/Edge of the Galaxy.tres" type="DynamicFont" id=17]
 
 [sub_resource type="Animation" id=1]
 step = 0.025
@@ -566,7 +566,13 @@ margin_bottom = 203.0
 [node name="HBoxContainer" parent="Console/Background/MarginContainer/SectionsContainer/InputContainer" index="0"]
 margin_right = 426.0
 
+[node name="Caret" parent="Console/Background/MarginContainer/SectionsContainer/InputContainer/HBoxContainer" index="0"]
+margin_top = 19.0
+margin_right = 3.0
+margin_bottom = 21.0
+
 [node name="Input" parent="Console/Background/MarginContainer/SectionsContainer/InputContainer/HBoxContainer" index="1"]
+margin_left = 7.0
 margin_right = 426.0
 
 [node name="Autocomplete" parent="Console" index="1"]

@@ -279,31 +279,33 @@ func move_ship_along_path(start,solar_range,destination_solar,shipID,input):
 signal refresh_ui(aID)
 func buildLimit():
 	turnLimits[0] -= 1
-
 var turnLimits = [1,0] #1 build per turn, ships production limit, 
 signal clear_history
+signal activate_console
+signal deactivate_console 
+var active_id
 
-## (next_turn) Mass updates the entire game state, proceeding to the next turn.
-# @param - active_id: the active player ID
-# @param - active_username: the active player username
+## (next_player) Starts the next turn cycle, mass updates entire game state proceeding to next turn
+# @param - ender_id: ID of the player ending their turn
 # => USER: host
 # => RESULT: Updates match state and turn limits
-func next_turn(active_id,active_username): #executed when a player ends their turn
+func next_player(ender_id):
+	if active_id == 0: active_id = 1
+	else: active_id = 0
+	client.send_match_state({"ACTIVE_ID":active_id},8)
+	var active_username = Database.PLAYERS[active_id][0]
 	emit_signal("clear_history")
 	emit_signal("refresh_ui",active_id)
 	turnLimits = [1,0] #reset
 	#### FIND NUMBER OF MILITARY STATIONS ####
-	for system in Database.GALACTIC_DATA.keys():
-			for solar in Database.GALACTIC_DATA[system].keys():
-				for object in Database.GALACTIC_DATA[system][solar].keys():
-					if not "-" in object: #if its a planet
-						for building in Database.GALACTIC_DATA[system][solar][object].keys():
-							if building != "Owner" and building != "building_slots":
-								#if building
-								var building_tags = building.split("-")
-								
-								if building_tags[1] == "MILITARY_STATION" and Database.GALACTIC_DATA[system][solar][object][building]["OWNER"]==active_id:
-									turnLimits[1] += 1
+	for solar in Database.GALACTIC_DATA.keys():
+		for object in Database.GALACTIC_DATA[solar].keys():
+			if not "-" in object: #if its a planet
+				for building in Database.GALACTIC_DATA[solar][object].keys():
+					if building != "Owner" and building != "building_slots":
+						var building_tags = building.split("-")
+						if building_tags[1] == "MILITARY_STATION" and Database.GALACTIC_DATA[solar][object][building]["OWNER"]==active_id:
+							turnLimits[1] += 1
 	Database.PRODUCTION_QUEUE[active_id]["slots"] = turnLimits[1]
 	if active_id == 0: #new round of turns
 		Database.global_turn_counter += 1
@@ -318,30 +320,9 @@ func next_turn(active_id,active_username): #executed when a player ends their tu
 	resolve_repairs_and_moves() #updates galactic data, using galactic data, battle queue, players
 	emit_signal("refresh_ui",active_id)
 	client.send_match_state({},10)
+	
 
-func deterministicTurnUpdate():
-	if active_id == 0:
-		Database.global_turn_counter += 1
-	resolve_supply_system() #updates supply_system, using galactic data
-	resolve_battles(active_id) #updates battle_Queue, land_queue, uses supply system, galactic data
-	resolve_player_queue(active_id)  #updates player queue, production queue, galactic data using battle queue
-	resolve_resources(active_id)  #updates players, using galactic data, battle queue, supply system
-	resolve_repairs_and_moves() #updates galactic data, using galactic data, battle queue, players
-	emit_signal("refresh_ui",active_id)
-
-signal activate_console
-signal deactivate_console 
-var active_id
-
-## (next_player) Starts the next turn cycle
-# @param - ender_id: ID of the player ending their turn
-# => USER: host
-# => RESULT: Calls next_turn function and changes active_id on client side
-func next_player(ender_id):
-	if active_id == 0: active_id = 1
-	else: active_id = 0
-	client.send_match_state({"ACTIVE_ID":active_id},8)
-	next_turn(active_id,Database.PLAYERS[active_id][0])
+### RESOLVE GAME STATE FUNCTIONS ###
 
 func resolve_supply_system():
 	var p1_quota = 0
@@ -363,29 +344,28 @@ func resolve_supply_system():
 		p2_supplyloss += 0.3
 	else: #no battles
 		supplyloss = false
-	for system in Database.GALACTIC_DATA.keys():
-		for solar in Database.GALACTIC_DATA[system].keys():
-			for object in Database.GALACTIC_DATA[system][solar].keys():
-				var object_tags = object.split("-")
-				#set supplier score
-				if object_tags[0] == "SHIP":
-					if Database.GALACTIC_DATA[system][solar][object]["OWNER"] == 0:
-						p1_quota += Database.GALACTIC_DATA[system][solar][object]["FUEL_USAGE"]+Database.GALACTIC_DATA[system][solar][object]["ENERGY_USAGE"]+Database.GALACTIC_DATA[system][solar][object]["REPAIR_METAL_USAGE"]
+	for solar in Database.GALACTIC_DATA.keys():
+		for object in Database.GALACTIC_DATA[solar].keys():
+			var object_tags = object.split("-")
+			#set supplier score
+			if object_tags[0] == "SHIP":
+				if Database.GALACTIC_DATA[solar][object]["OWNER"] == 0:
+					p1_quota += Database.GALACTIC_DATA[solar][object]["FUEL_USAGE"]+Database.GALACTIC_DATA[solar][object]["ENERGY_USAGE"]+Database.GALACTIC_DATA[solar][object]["REPAIR_METAL_USAGE"]
+				else:
+					p2_quota += Database.GALACTIC_DATA[solar][object]["FUEL_USAGE"]+Database.GALACTIC_DATA[solar][object]["ENERGY_USAGE"]+Database.GALACTIC_DATA[solar][object]["REPAIR_METAL_USAGE"]
+			#account for supply loss negation
+			if object_tags[0] == "SUPPLIER":
+				if Database.GALACTIC_DATA[solar][object]["DEFENDER"]:
+					if Database.GALACTIC_DATA[solar][object]["OWNER"] == 0:
+						p1_supplyloss -= Database.GALACTIC_DATA[solar][object]["SUPPLY_LOSS_NEGATION"]
 					else:
-						p2_quota += Database.GALACTIC_DATA[system][solar][object]["FUEL_USAGE"]+Database.GALACTIC_DATA[system][solar][object]["ENERGY_USAGE"]+Database.GALACTIC_DATA[system][solar][object]["REPAIR_METAL_USAGE"]
-				#account for supply loss negation
-				if object_tags[0] == "SUPPLIER":
-					if Database.GALACTIC_DATA[system][solar][object]["DEFENDER"]:
-						if Database.GALACTIC_DATA[system][solar][object]["OWNER"] == 0:
-							p1_supplyloss -= Database.GALACTIC_DATA[system][solar][object]["SUPPLY_LOSS_NEGATION"]
-						else:
-							p2_supplyloss -= Database.GALACTIC_DATA[system][solar][object]["SUPPLY_LOSS_NEGATION"]
-				#find supplier score
-					if not Database.GALACTIC_DATA[system][solar][object]["DEFENDER"]:
-						if Database.GALACTIC_DATA[system][solar][object]["OWNER"] == 0:
-							p1_score += Database.GALACTIC_DATA[system][solar][object]["SUPPLIER_SCORE"]
-						else:
-							p2_score += Database.GALACTIC_DATA[system][solar][object]["SUPPLIER_SCORE"]
+						p2_supplyloss -= Database.GALACTIC_DATA[solar][object]["SUPPLY_LOSS_NEGATION"]
+			#find supplier score
+				else:
+					if Database.GALACTIC_DATA[solar][object]["OWNER"] == 0:
+						p1_score += Database.GALACTIC_DATA[solar][object]["SUPPLIER_SCORE"]
+					else:
+						p2_score += Database.GALACTIC_DATA[solar][object]["SUPPLIER_SCORE"]
 	Database.SUPPLY_SYSTEM[0]["QUOTA"] = p1_quota
 	Database.SUPPLY_SYSTEM[1]["QUOTA"] = p2_quota
 	Database.SUPPLY_SYSTEM[0]["SUPPLIER_SCORE"] = p1_score
@@ -454,12 +434,11 @@ func resolve_player_queue(id):
 		if spawn:
 			for i in range(product[3]):
 				#find the solar the planet resides in
-				var spawn_solar = 0
-				for sector in Database.GALACTIC_DATA.keys():
-					for solar in Database.GALACTIC_DATA[sector].keys():
-						for object in Database.GALACTIC_DATA[sector][solar].keys():
-							if object == product[2]:
-								spawn_solar = solar
+				var spawn_solar = ""
+				for solar in Database.GALACTIC_DATA.keys():
+					for object in Database.GALACTIC_DATA[solar].keys():
+						if object == product[2]:
+							spawn_solar = solar
 				if type == 0:
 					var enemy_in_solar = false
 					var new_ship_id = "SHIP-"+product[0]+"-"+str(Database.global_id_counter)
@@ -468,14 +447,13 @@ func resolve_player_queue(id):
 						join_battle(spawn_solar,new_ship_id)
 						emit_signal("log_update","Newly built ship joining ongoing battle detected in Sector "+str(spawn_solar)+".")
 					else: #no battle here yet, check if enemies in solar
-						for sys in Database.GALACTIC_DATA.keys():
-							for sol in Database.GALACTIC_DATA[sys].keys():
-								if sol == spawn_solar:
-									for obj in Database.GALACTIC_DATA[sys][sol].keys():
-										var obj_tags = obj.split("-")
-										if obj_tags[0] == "SHIP":
-											if Database.GALACTIC_DATA[sys][sol][obj]["OWNER"] != id: #dont own ship
-												enemy_in_solar = true
+						for sol in Database.GALACTIC_DATA.keys():
+							if sol == spawn_solar:
+								for obj in Database.GALACTIC_DATA[sol].keys():
+									var obj_tags = obj.split("-")
+									if obj_tags[0] == "SHIP":
+										if Database.GALACTIC_DATA[sol][obj]["OWNER"] != id: #dont own ship
+											enemy_in_solar = true
 					if enemy_in_solar:
 						start_battle(spawn_solar)
 						emit_signal("refresh_map")
@@ -506,27 +484,26 @@ func resolve_resources(id):
 		supplyoutput = 1.0
 	#Adds resources for every fuel mine, metals mine, etc
 	#Removes resources for every running ship (even if they aren't fully supplied)
-	for system in Database.GALACTIC_DATA.keys():
-		for solar in Database.GALACTIC_DATA[system].keys():
-			for object in Database.GALACTIC_DATA[system][solar].keys():
-				var object_tags = object.split("-")
-				if object_tags[0] != "SHIP":
-					for building in Database.GALACTIC_DATA[system][solar][object].keys(): #for each thing on planet
-						object_tags = building.split("-")
-						if object_tags[0] == "BUILDING":
-							if object_tags[1] == "FUEL_MINE":
-								if Database.GALACTIC_DATA[system][solar][object][building]["OWNER"] == id: #if this player owns the mine
-									fuel_change += 1200
-							if object_tags[1] == "ENERGY_MINE":
-								if Database.GALACTIC_DATA[system][solar][object][building]["OWNER"] == id:
-									energy_change += 800
-							if object_tags[1] == "METALS_MINE":
-								if Database.GALACTIC_DATA[system][solar][object][building]["OWNER"] == id:
-									metals_change += 100
-				else: #is a ship
-					if Database.GALACTIC_DATA[system][solar][object]["OWNER"] == id:
-						energy_change -= Database.SHIPS[object_tags[1]]["ENERGY_USAGE"]*supplyoutput
-						fuel_change -= Database.SHIPS[object_tags[1]]["FUEL_USAGE"]*supplyoutput
+	for solar in Database.GALACTIC_DATA.keys():
+		for object in Database.GALACTIC_DATA[solar].keys():
+			var object_tags = object.split("-")
+			if object_tags[0] != "SHIP":
+				for building in Database.GALACTIC_DATA[solar][object].keys(): #for each thing on planet
+					object_tags = building.split("-")
+					if object_tags[0] == "BUILDING":
+						if object_tags[1] == "FUEL_MINE":
+							if Database.GALACTIC_DATA[solar][object][building]["OWNER"] == id: #if this player owns the mine
+								fuel_change += 1200
+						if object_tags[1] == "ENERGY_MINE":
+							if Database.GALACTIC_DATA[solar][object][building]["OWNER"] == id:
+								energy_change += 800
+						if object_tags[1] == "METALS_MINE":
+							if Database.GALACTIC_DATA[solar][object][building]["OWNER"] == id:
+								metals_change += 100
+			else: #is a ship
+				if Database.GALACTIC_DATA[solar][object]["OWNER"] == id:
+					energy_change -= Database.SHIPS[object_tags[1]]["ENERGY_USAGE"]*supplyoutput
+					fuel_change -= Database.SHIPS[object_tags[1]]["FUEL_USAGE"]*supplyoutput
 	for solar in Database.BATTLE_QUEUE.keys():
 		for side in Database.BATTLE_QUEUE[solar].keys():
 			for ship in Database.BATTLE_QUEUE[solar][side].keys():
@@ -645,14 +622,13 @@ func resolve_battles(active_id):
 						for ship in Database.BATTLE_QUEUE[battle][s].keys():
 							winnerIDs.append(ship)
 				for id in winnerIDs:
-					for system in Database.GALACTIC_DATA.keys():
-						for solar in Database.GALACTIC_DATA[system].keys():
-							for object in Database.GALACTIC_DATA[system][solar].keys():
-								if object == id:
-									Database.GALACTIC_DATA[system][solar][object]["MAX_HEALTH"] = Database.GALACTIC_DATA[system][solar][object]["MAX_HEALTH"]*0.9
-									Database.GALACTIC_DATA[system][solar][object]["HEALTH"] = Database.GALACTIC_DATA[system][solar][object]["HEALTH"]*0.9
-									if active_id == winnerID:
-										emit_signal("log_update","Remaining ships are damaged, and require full repairs.")
+					for solar in Database.GALACTIC_DATA.keys():
+						for object in Database.GALACTIC_DATA[solar].keys():
+							if object == id:
+								Database.GALACTIC_DATA[solar][object]["MAX_HEALTH"] = Database.GALACTIC_DATA[solar][object]["MAX_HEALTH"]*0.9
+								Database.GALACTIC_DATA[solar][object]["HEALTH"] = Database.GALACTIC_DATA[solar][object]["HEALTH"]*0.9
+								if active_id == winnerID:
+									emit_signal("log_update","Remaining ships are damaged, and require full repairs.")
 				Database.BATTLE_QUEUE.erase(battle)
 				break
 	client.send_match_state({"EVASION_RANDS": Database.evasion_rands},9)
@@ -666,35 +642,32 @@ func resolve_battles(active_id):
 			var legions = 0
 			var ids = [0,0]
 			for ship in Database.LAND_QUEUE[battle][0]: #for all the ships on side 1
-				for system in Database.GALACTIC_DATA.keys():
-					for solar in Database.GALACTIC_DATA[system].keys():
-						for object in Database.GALACTIC_DATA[system][solar].keys():
-							if "-" in object and object == ship: #its a ship
-								battalions += Database.GALACTIC_DATA[system][solar][object]["BATTALIONS"]
-								legions += Database.GALACTIC_DATA[system][solar][object]["LEGIONS"]
-								ids[0] = Database.GALACTIC_DATA[system][solar][object]["OWNER"]
+				for solar in Database.GALACTIC_DATA.keys():
+					for object in Database.GALACTIC_DATA[solar].keys():
+						if "-" in object and object == ship: #its a ship
+							battalions += Database.GALACTIC_DATA[solar][object]["BATTALIONS"]
+							legions += Database.GALACTIC_DATA[solar][object]["LEGIONS"]
+							ids[0] = Database.GALACTIC_DATA[solar][object]["OWNER"]
 			side1_warscore = (100*battalions)+(500*legions)*p1_supply_modifier
 			battalions = 0
 			legions = 0
 			for garrison in Database.LAND_QUEUE[battle][1]:
-				for system in Database.GALACTIC_DATA.keys():
-					for solar in Database.GALACTIC_DATA[system].keys():
-						for object in Database.GALACTIC_DATA[system][solar].keys():
-							if object == battle:
-								for building in Database.GALACTIC_DATA[system][solar][object].keys():
-									if building != "Owner" and building != "building_slots":
-										var building_tags = building.split("-")
-										if building_tags[1] == "GARRISON":
-											battalions += Database.GALACTIC_DATA[system][solar][object][building]["BATTALIONS"]
-											ids[1] = Database.GALACTIC_DATA[system][solar][object][building]["OWNER"]
+				for solar in Database.GALACTIC_DATA.keys():
+					for object in Database.GALACTIC_DATA[solar].keys():
+						if object == battle:
+							for building in Database.GALACTIC_DATA[solar][object].keys():
+								if building != "Owner" and building != "building_slots":
+									var building_tags = building.split("-")
+									if building_tags[1] == "GARRISON":
+										battalions += Database.GALACTIC_DATA[solar][object][building]["BATTALIONS"]
+										ids[1] = Database.GALACTIC_DATA[solar][object][building]["OWNER"]
 			if Database.LAND_QUEUE[battle][1].size() == 0: #undefended planet
-				for system in Database.GALACTIC_DATA.keys():
-					for solar in Database.GALACTIC_DATA[system].keys():
-						for object in Database.GALACTIC_DATA[system][solar].keys():
-							if object == battle: #correct planet
-								for ID in Database.PLAYERS.keys():
-									if Database.GALACTIC_DATA[system][solar][object]["Owner"] == Database.PLAYERS[ID][0]:
-										ids[1] = ID
+				for solar in Database.GALACTIC_DATA.keys():
+					for object in Database.GALACTIC_DATA[solar].keys():
+						if object == battle: #correct planet
+							for ID in Database.PLAYERS.keys():
+								if Database.GALACTIC_DATA[solar][object]["Owner"] == Database.PLAYERS[ID][0]:
+									ids[1] = ID
 			side2_warscore = (100*battalions)+(500*legions)*p2_supply_modifier
 			if side1_warscore == side2_warscore:
 				emit_signal("log_update","The Battle of "+battle+" is at a stalemate. The siege continues...")
@@ -715,46 +688,44 @@ func resolve_battles(active_id):
 				else:
 					emit_signal("log_update",battle+" has capitulated to an invasion.")
 				#message to attackers
-				for system in Database.GALACTIC_DATA.keys():
-					for solar in Database.GALACTIC_DATA[system].keys():
-						for object in Database.GALACTIC_DATA[system][solar].keys():
-							if not "-" in object: #is a planet
-								if object == battle:
-									Database.GALACTIC_DATA[system][solar][object]["Owner"] = Database.PLAYERS[ids[0]][0]
-									for building in Database.GALACTIC_DATA[system][solar][object].keys():
-										if building != "Owner" and building != "building_slots":
-											Database.GALACTIC_DATA[system][solar][object][building]["OWNER"] == ids[0]
+				for solar in Database.GALACTIC_DATA.keys():
+					for object in Database.GALACTIC_DATA[solar].keys():
+						if not "-" in object: #is a planet
+							if object == battle:
+								Database.GALACTIC_DATA[solar][object]["Owner"] = Database.PLAYERS[ids[0]][0]
+								for building in Database.GALACTIC_DATA[solar][object].keys():
+									if building != "Owner" and building != "building_slots":
+										Database.GALACTIC_DATA[solar][object][building]["OWNER"] == ids[0]
 				Database.LAND_QUEUE.erase(battle)
 				check_for_losers(ids[1],Database.PLAYERS[ids[1]][0])
 		else:
 			emit_signal("log_update","The Siege of "+battle+" will finish in "+str(4-(Database.global_turn_counter - Database.LAND_QUEUE[battle][2]))+" turns.")
 func resolve_repairs_and_moves():
-	for system in Database.GALACTIC_DATA.keys():
-		for solar in Database.GALACTIC_DATA[system].keys():
-			if not solar in Database.BATTLE_QUEUE.keys():
-				for object in Database.GALACTIC_DATA[system][solar].keys():
-					var object_tags = object.split("-")
-					var friendly_base = false
-					#check if we own a planet in here and if there's no battle here
-					for o in Database.GALACTIC_DATA[system][solar].keys():
-						if not "-" in o: #planet
-							if Database.GALACTIC_DATA[system][solar][o]["Owner"] == Database.PLAYERS[active_id][0]:
-								#we own the planet
-								friendly_base = true
-					if object_tags[0] == "SHIP":
-						Database.GALACTIC_DATA[system][solar][object]["MOVEABLE"] = true
-						if Database.GALACTIC_DATA[system][solar][object]["OWNER"] == active_id:
-							if Database.GALACTIC_DATA[system][solar][object]["MAX_HEALTH"] != Database.SHIPS[object_tags[1]]["MAX_HEALTH"]:
-								#this ship has been damaged
-								if friendly_base:
-									Database.GALACTIC_DATA[system][solar][object]["MAX_HEALTH"] = Database.SHIPS[object_tags[1]]["MAX_HEALTH"]
-									Database.GALACTIC_DATA[system][solar][object]["HEALTH"] = Database.SHIPS[object_tags[1]]["HEALTH"]
-									emit_signal("log_update","Ship(s) in "+str(solar)+" fully underwent repairs.")
-			else:
-				for object in Database.GALACTIC_DATA[system][solar].keys():
-					var object_tags = object.split("-")
-					if object_tags[0] == "SHIP":
-						Database.GALACTIC_DATA[system][solar][object]["MOVEABLE"] = true
+	for solar in Database.GALACTIC_DATA.keys():
+		if not solar in Database.BATTLE_QUEUE.keys():
+			for object in Database.GALACTIC_DATA[solar].keys():
+				var object_tags = object.split("-")
+				var friendly_base = false
+				#check if we own a planet in here and if there's no battle here
+				for o in Database.GALACTIC_DATA[solar].keys():
+					if not "-" in o: #planet
+						if Database.GALACTIC_DATA[solar][o]["Owner"] == Database.PLAYERS[active_id][0]:
+							#we own the planet
+							friendly_base = true
+				if object_tags[0] == "SHIP":
+					Database.GALACTIC_DATA[solar][object]["MOVEABLE"] = true
+					if Database.GALACTIC_DATA[solar][object]["OWNER"] == active_id:
+						if Database.GALACTIC_DATA[solar][object]["MAX_HEALTH"] != Database.SHIPS[object_tags[1]]["MAX_HEALTH"]:
+							#this ship has been damaged
+							if friendly_base:
+								Database.GALACTIC_DATA[solar][object]["MAX_HEALTH"] = Database.SHIPS[object_tags[1]]["MAX_HEALTH"]
+								Database.GALACTIC_DATA[solar][object]["HEALTH"] = Database.SHIPS[object_tags[1]]["HEALTH"]
+								emit_signal("log_update","Ship(s) in "+str(solar)+" fully underwent repairs.")
+		else:
+			for object in Database.GALACTIC_DATA[solar].keys():
+				var object_tags = object.split("-")
+				if object_tags[0] == "SHIP":
+					Database.GALACTIC_DATA[solar][object]["MOVEABLE"] = true
 					
 func start_battle(solar_id):
 	packets.append("START_BATTLE-"+str(solar_id))
@@ -766,16 +737,15 @@ func start_battle(solar_id):
 		0: {},
 		1: {}
 	}
-	for system in Database.GALACTIC_DATA.keys():
-			for solar in Database.GALACTIC_DATA[system].keys():
-				if solar == solar_id:
-					for object in Database.GALACTIC_DATA[system][solar].keys():
-						var object_tags = object.split("-")
-						if object_tags[0] == "SHIP":
-							if Database.GALACTIC_DATA[system][solar][object]["OWNER"] == 0:
-								side1ships[object] = Database.GALACTIC_DATA[system][solar][object].duplicate()
-							elif Database.GALACTIC_DATA[system][solar][object]["OWNER"] == 1:
-								side2ships[object] = Database.GALACTIC_DATA[system][solar][object].duplicate()
+	for solar in Database.GALACTIC_DATA.keys():
+		if solar == solar_id:
+			for object in Database.GALACTIC_DATA[solar].keys():
+				var object_tags = object.split("-")
+				if object_tags[0] == "SHIP":
+					if Database.GALACTIC_DATA[solar][object]["OWNER"] == 0:
+						side1ships[object] = Database.GALACTIC_DATA[solar][object].duplicate()
+					elif Database.GALACTIC_DATA[solar][object]["OWNER"] == 1:
+						side2ships[object] = Database.GALACTIC_DATA[solar][object].duplicate()
 	Database.BATTLE_QUEUE[solar_id] = {
 		0: side1ships,
 		1: side2ships
@@ -783,26 +753,23 @@ func start_battle(solar_id):
 func join_battle(solar,shipID):
 	packets.append("JOIN_BATTLE-"+str(solar)+"-"+str(shipID))
 	for side in Database.BATTLE_QUEUE[solar].keys():
-		for system in Database.GALACTIC_DATA.keys():
-			if solar in Database.GALACTIC_DATA[system].keys():
-				if Database.GALACTIC_DATA[system][solar][shipID]["OWNER"] == side:
-					#the joining ship is on this side
-					Database.BATTLE_QUEUE[solar][side][shipID] = Database.GALACTIC_DATA[system][solar][shipID].duplicate()
-					break
+		if Database.GALACTIC_DATA[solar][shipID]["OWNER"] == side:
+			#the joining ship is on this side
+			Database.BATTLE_QUEUE[solar][side][shipID] = Database.GALACTIC_DATA[solar][shipID].duplicate()
+			break
 func start_land_battle(solar,contested_planet,invading_shipsIDs):
 	packets.append(["LB/S",contested_planet,invading_shipsIDs])
 	var turncounter = Database.global_turn_counter
 	var defending_garrisons = []
-	for system in Database.GALACTIC_DATA.keys():
-		for solar in Database.GALACTIC_DATA[system].keys():
-			for object in Database.GALACTIC_DATA[system][solar].keys():
-				if not "-" in object: #its a planet
-					if object == contested_planet:
-						for building in Database.GALACTIC_DATA[system][solar][object].keys():
-							if building != "Owner" and building != "building_slots":
-								var building_tags = building.split("-")
-								if building_tags[1] == "GARRISON":
-									defending_garrisons.append(building)
+	for solar in Database.GALACTIC_DATA.keys():
+		for object in Database.GALACTIC_DATA[solar].keys():
+			if not "-" in object: #its a planet
+				if object == contested_planet:
+					for building in Database.GALACTIC_DATA[solar][object].keys():
+						if building != "Owner" and building != "building_slots":
+							var building_tags = building.split("-")
+							if building_tags[1] == "GARRISON":
+								defending_garrisons.append(building)
 	var battle = [invading_shipsIDs,defending_garrisons,turncounter]
 	Database.LAND_QUEUE[contested_planet] = battle
 func join_land_battle(solar,contested_planet,invading_shipsIDs):

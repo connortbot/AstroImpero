@@ -1,9 +1,6 @@
 extends Node
 #https://heroiclabs.com/docs/nakama/concepts/multiplayer/relayed/
 
-# Hosted on Digital Ocean, a Nakama Droplet
-# PW: ZFGFNM092304<3C
-
 var client : NakamaClient
 var socket
 var session : NakamaSession
@@ -20,8 +17,10 @@ var session_token
 
 func _ready():
 	# Defining the Client
-	client = Nakama.create_client("defaultkey","165.22.239.46",7350,"http")
-	client.timeout = 500
+	var PORT = 0000
+	var IP = "1.1.1.1"
+	client = Nakama.create_client("defaultkey",IP,PORT,"http")
+	client.timeout = 100
 	
 	# Device Authentication, and creating Session
 	session = yield(client.authenticate_device_async(device_id), "completed")
@@ -41,14 +40,18 @@ func _ready():
 	socket.connect("received_match_presence", self, "_on_match_presence")
 	socket.connect("received_match_state",self,"_on_match_state")
 
-# Session Functions
+
+
+### Session Functions ###
 func refresh_session():
 	session = NakamaClient.restore_session(session_token)
+
 func logout_session():
 	yield(client.session_logout_async(session),"completed")
 
+
+
 ### Matching Functions ###
-# Match Variables
 var connected_opponents = {}
 var created_match : NakamaRTAPI.Match
 var matchID: String
@@ -58,6 +61,7 @@ func create_match():
 		print("An error occurred: %s" % created_match)
 		return
 	matchID = created_match.match_id
+
 func join_match(match_ID): #you have to join with the above match_id variable
 	var joined_match = yield(socket.join_match_async(match_ID),"completed")
 	if joined_match.is_exception():
@@ -66,11 +70,12 @@ func join_match(match_ID): #you have to join with the above match_id variable
 	for presence in joined_match.presences:
 		print("User id %s name %s'." % [presence.user_id,presence.username])
 	matchID = match_ID
+
 func send_match_state(data,op_code): #sends data in dict form, converts to json and sends
 	print("Sending match state with op code "+str(op_code))
 	socket.send_match_state_async(matchID,op_code,JSON.print(data))
 	
-	
+
 #Receiving Match States
 signal received_p2_username
 signal received_usernames_from_host

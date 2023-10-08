@@ -1,13 +1,10 @@
-[gd_scene load_steps=14 format=2]
+[gd_scene load_steps=12 format=2]
 
-[ext_resource path="res://3DMap/Planet3D.gd" type="Script" id=1]
-[ext_resource path="res://Spatial.gd" type="Script" id=2]
-[ext_resource path="res://BlackHole.tscn" type="PackedScene" id=3]
-[ext_resource path="res://3DMap/Anomaly.tscn" type="PackedScene" id=4]
-[ext_resource path="res://3DMap/SystemMaterial.tres" type="Material" id=9]
-[ext_resource path="res://3DMap/3DMap.gd" type="Script" id=10]
-[ext_resource path="res://3DMap/Anomaly2.tscn" type="PackedScene" id=11]
-[ext_resource path="res://3DMap/3DAssets/GalaxyEnvironment.tres" type="Environment" id=12]
+[ext_resource path="res://3DMap/Anomaly.tscn" type="PackedScene" id=1]
+[ext_resource path="res://3DMap/SystemMaterial.tres" type="Material" id=3]
+[ext_resource path="res://BlackHole.tscn" type="PackedScene" id=5]
+[ext_resource path="res://3DMap/Anomaly2.tscn" type="PackedScene" id=6]
+[ext_resource path="res://3DMap/3DAssets/GalaxyEnvironment.tres" type="Environment" id=7]
 
 [sub_resource type="SpatialMaterial" id=1]
 vertex_color_use_as_albedo = true
@@ -46,8 +43,110 @@ emission_on_uv2 = false
 [sub_resource type="SphereShape" id=5]
 radius = 1.04599
 
+[sub_resource type="GDScript" id=6]
+script/source = "extends Spatial
+
+var snappos = Vector3(0,0,0)
+var zoom = 0
+var y_rot = 0
+var x_rot = 0
+var newzoom = 30
+
+func _physics_process(delta: float) -> void:
+	if Input.is_action_pressed(\"up_arrow\"):
+		zoom -= 0.5
+		zoom = clamp(zoom,-8,30)
+		newzoom = 10+zoom
+	if Input.is_action_pressed(\"down_arrow\"):
+		zoom += 0.5
+		zoom = clamp(zoom,-8,30)
+		newzoom = 10+zoom
+	if Input.is_action_just_released(\"mouse\"):
+		clicked = false
+		x_rot = 0
+		y_rot = 0
+	$InnerGimbal.rotation_degrees.x = lerp($InnerGimbal.rotation_degrees.x,$InnerGimbal.rotation_degrees.x+x_rot,panspeed*delta)
+	rotation_degrees.y = lerp(rotation_degrees.y,rotation_degrees.y+y_rot,panspeed*delta)
+	translation = lerp(translation,snappos,10*delta)
+	$InnerGimbal/Camera.translation.z = lerp($InnerGimbal/Camera.translation.z,newzoom,zoomspeed*delta)
+
+var clicked = false
+var ray_length = 1000
+
+func zoom(value):
+	zoom = 0
+	newzoom = value
+
+var panspeed = 2.0
+var zoomspeed = 3.0
+
+var sector_list = []
+var planet_list = []
+var battle_list = []
+func _unhandled_input(event: InputEvent) -> void:
+	#Mac Support
+	if event is InputEventPanGesture:
+		y_rot = event.delta.x*15.0
+		x_rot = event.delta.y*15.0
+	#Mouse Support
+	if event is InputEventMouseButton:
+		if event.button_mask == BUTTON_LEFT:
+			if event.pressed:
+				clicked = true
+		if event.button_mask == BUTTON_WHEEL_DOWN:
+			zoom += 0.5
+		if event.button_mask == BUTTON_WHEEL_UP:
+			zoom -= 0.5
+	if event is InputEventMouseMotion:
+		if clicked:
+			y_rot = event.relative.x*(panspeed)
+			x_rot = event.relative.y*(panspeed)
+	if event is InputEventMouseButton and event.pressed and event.button_index == BUTTON_LEFT:
+		var sectorhit = {}
+		var planethit = {}
+		var battlehit = {}
+		var camera = $InnerGimbal/Camera
+		### Sector Ray ###
+		var from = camera.project_ray_origin(event.position)
+		var to = from + camera.project_ray_normal(event.position) * ray_length
+		var space_state = get_world().get_direct_space_state()
+		sectorhit = space_state.intersect_ray(from,to,planet_list,2147483647,true,true)
+		### Planetary Ray
+		from = camera.project_ray_origin(event.position)
+		to = from + camera.project_ray_normal(event.position) * ray_length
+		space_state = get_world().get_direct_space_state()
+		planethit = space_state.intersect_ray(from,to,sector_list,2147483647,true,true)
+		### Battle Ray
+		from = camera.project_ray_origin(event.position)
+		to = from + camera.project_ray_normal(event.position) * ray_length
+		space_state = get_world().get_direct_space_state()
+		battlehit = space_state.intersect_ray(from,to,planet_list+sector_list,2147483647,true,true)
+		if not battlehit.empty():
+			battlehit[\"collider\"].get_parent().get_parent().clicked()
+		if not planethit.empty() and battlehit.empty():
+			var planetname = planethit[\"collider\"].get_parent().name
+			get_parent().planet_name(planetname)
+			planethit[\"collider\"].get_parent().area_input()
+		if planethit.empty() and battlehit.empty() and not sectorhit.empty():
+				var sectorid = sectorhit[\"collider\"].get_parent().name.replace(\"Sector\",\"\")
+				get_parent().window(sectorid)
+				sectorhit[\"collider\"].get_parent().area_input()
+func _ready() -> void:
+	sector_list = []
+	planet_list = []
+	battle_list = []
+	for child in get_node(\"../Galaxy\").get_children():
+		if child.name != \"GalaxyModel\" and child.name != \"BlackHole\":
+			if \"Sector\" in child.name:
+				sector_list.append(child.get_child(0).get_child(0))
+			elif \"BATTLE\" in child.name:
+				battle_list.append(child.get_child(0).get_child(0))
+			else:
+				planet_list.append(child.get_child(0))
+				
+"
+
 [node name="3DMap" type="Spatial"]
-script = ExtResource( 10 )
 
 [node name="Galaxy" type="Spatial" parent="."]
 transform = Transform( 0.1, 0, 0, 0, 0.1, 0, 0, 0, 0.1, 0, 0, 0 )
@@ -60,8 +159,7 @@ material/0 = SubResource( 3 )
 [node name="Isaac" type="MeshInstance" parent="Galaxy"]
 transform = Transform( 2, 2.53576e-11, -1.30967e-10, -2.53576e-11, 2, 6.36137e-27, 1.30967e-10, 1.6605e-21, 2, 42, -9, 9 )
 mesh = SubResource( 4 )
-material/0 = ExtResource( 9 )
-script = ExtResource( 1 )
+material/0 = ExtResource( 3 )
 
 [node name="Area" type="Area" parent="Galaxy/Isaac"]
 
@@ -71,8 +169,7 @@ shape = SubResource( 5 )
 [node name="Anaxes" type="MeshInstance" parent="Galaxy"]
 transform = Transform( 2, -2.03269e-11, -4.36557e-11, -2.53575e-11, 2, -8.73115e-11, 1.30967e-10, 0, 2, -5, 1, 50 )
 mesh = SubResource( 4 )
-material/0 = ExtResource( 9 )
-script = ExtResource( 1 )
+material/0 = ExtResource( 3 )
 
 [node name="Area" type="Area" parent="Galaxy/Anaxes"]
 
@@ -82,8 +179,7 @@ shape = SubResource( 5 )
 [node name="Agumuun" type="MeshInstance" parent="Galaxy"]
 transform = Transform( 2, -2.03269e-11, -4.36557e-11, -2.53575e-11, 2, -8.73115e-11, 1.30967e-10, 0, 2, -45, 6, 34 )
 mesh = SubResource( 4 )
-material/0 = ExtResource( 9 )
-script = ExtResource( 1 )
+material/0 = ExtResource( 3 )
 
 [node name="Area" type="Area" parent="Galaxy/Agumuun"]
 
@@ -93,8 +189,7 @@ shape = SubResource( 5 )
 [node name="Riga" type="MeshInstance" parent="Galaxy"]
 transform = Transform( 2, 2.53575e-11, -1.30967e-10, -2.53575e-11, 2, 0, 1.30967e-10, 1.6605e-21, 2, -25, 2, 100 )
 mesh = SubResource( 4 )
-material/0 = ExtResource( 9 )
-script = ExtResource( 1 )
+material/0 = ExtResource( 3 )
 
 [node name="Area" type="Area" parent="Galaxy/Riga"]
 
@@ -104,8 +199,7 @@ shape = SubResource( 5 )
 [node name="Autumn" type="MeshInstance" parent="Galaxy"]
 transform = Transform( 2, 2.53575e-11, -1.30967e-10, -2.53575e-11, 2, 0, 1.30967e-10, 1.6605e-21, 2, -63, 15, -25 )
 mesh = SubResource( 4 )
-material/0 = ExtResource( 9 )
-script = ExtResource( 1 )
+material/0 = ExtResource( 3 )
 
 [node name="Area" type="Area" parent="Galaxy/Autumn"]
 
@@ -115,29 +209,28 @@ shape = SubResource( 5 )
 [node name="Botra" type="MeshInstance" parent="Galaxy"]
 transform = Transform( 2, -2.03872e-11, -2.91038e-11, 3.28946e-11, 2, -4.94765e-10, 1.01863e-10, 8.73115e-11, 2, -105, -15, 67 )
 mesh = SubResource( 4 )
-material/0 = ExtResource( 9 )
-script = ExtResource( 1 )
+material/0 = ExtResource( 3 )
 
 [node name="Area" type="Area" parent="Galaxy/Botra"]
 
 [node name="CollisionShape" type="CollisionShape" parent="Galaxy/Botra/Area"]
 shape = SubResource( 5 )
 
-[node name="BlackHole" parent="Galaxy" instance=ExtResource( 3 )]
-transform = Transform( 15, 2.83407e-10, 4.65661e-10, 3.50612e-09, 15, -6.98492e-10, -3.49246e-10, 2.09548e-09, 15, -74.8318, 0.0293313, 15.5219 )
+[node name="BlackHole" parent="Galaxy" instance=ExtResource( 5 )]
+transform = Transform( 15, 2.83407e-10, 4.65661e-10, 3.50612e-09, 15, -6.98492e-10, -3.49246e-10, 2.09548e-09, 15, 1.69253, 7.41096, 4.14967 )
 
-[node name="Anomaly" parent="Galaxy" instance=ExtResource( 4 )]
+[node name="Anomaly" parent="Galaxy" instance=ExtResource( 1 )]
 transform = Transform( -0.0352636, 0.0548697, 0.0758011, 0.0808026, 0.05871, -0.00490767, -0.0471956, 0.0595186, -0.0650393, -60.1477, 12.3509, -53.2874 )
 
-[node name="Anomaly2" parent="Galaxy" instance=ExtResource( 11 )]
+[node name="Anomaly2" parent="Galaxy" instance=ExtResource( 6 )]
 transform = Transform( 0.0916216, 1.09345e-05, 0.0400684, 8.73988e-06, 0.1, -4.7276e-05, -0.0400685, 4.68171e-05, 0.0916216, -9.05488, -0.0382586, 115.943 )
 
 [node name="MapEnv" type="WorldEnvironment" parent="Galaxy"]
-environment = ExtResource( 12 )
+environment = ExtResource( 7 )
 
 [node name="CameraGimbal" type="Spatial" parent="."]
 transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, -1.17632, 0.408775, 3.67197 )
-script = ExtResource( 2 )
+script = SubResource( 6 )
 
 [node name="InnerGimbal" type="Spatial" parent="CameraGimbal"]
 

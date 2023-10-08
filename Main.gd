@@ -87,35 +87,31 @@ func refresh_ui(aID):
 	
 
 #system,username,id,quadrant,core
-func starting_inventory(username,id,system_id):
-	if system_id == 4: #Botra Player
-		Database.GALACTIC_DATA[4][401]["Botra"]["Owner"] = username
-		InventoryManager.add_ship(id,"DESTROYER",401)
-		InventoryManager.add_ship(id,"DESTROYER",401)
-		InventoryManager.add_supplier(id,"FREIGHTER",401)
-		InventoryManager.add_building(id,"FUEL_MINE","Botra")
-		InventoryManager.add_building(id,"METALS_MINE","Botra")
-		InventoryManager.add_building(id,"ENERGY_MINE","Botra")
-		InventoryManager.add_building(id,"GARRISON","Botra")
-		for i in range(5):
-			InventoryManager.add_building(id,"MILITARY_STATION","Botra")
-	if system_id == 1: #Anaxes Player
-		Database.GALACTIC_DATA[1][101]["Anaxes"]["Owner"] = username
-		InventoryManager.add_ship(id,"DESTROYER",101)
-		InventoryManager.add_ship(id,"DESTROYER",101)
-		InventoryManager.add_supplier(id,"FREIGHTER",101)
-		InventoryManager.add_building(id,"GARRISON","Anaxes")
-		InventoryManager.add_building(id,"FUEL_MINE","Anaxes")
-		InventoryManager.add_building(id,"METALS_MINE","Anaxes")
-		InventoryManager.add_building(id,"ENERGY_MINE","Anaxes")
-		for i in range(5):
-			InventoryManager.add_building(id,"MILITARY_STATION","Anaxes")
+func starting_inventory(username,id,system_name):
+	InventoryManager.add_ship(id,"DESTROYER",system_name)
+	InventoryManager.add_ship(id,"DESTROYER",system_name)
+	InventoryManager.add_supplier(id,"FREIGHTER",system_name)
+	if system_name == "Botra": #Botra Player
+		Database.GALACTIC_DATA["Botra"]["Boshaa"]["Owner"] = username
+		InventoryManager.add_building(id,"FUEL_MINE","Boshaa")
+		InventoryManager.add_building(id,"METALS_MINE","Boshaa")
+		InventoryManager.add_building(id,"ENERGY_MINE","Boshaa")
+		InventoryManager.add_building(id,"GARRISON","Boshaa")
+	if system_name == "Anaxes": #Anaxes Player
+		Database.GALACTIC_DATA["Anaxes"]["Anenia"]["Owner"] = username
+		InventoryManager.add_building(id,"GARRISON","Anenia")
+		InventoryManager.add_building(id,"FUEL_MINE","Anenia")
+		InventoryManager.add_building(id,"METALS_MINE","Anenia")
+		InventoryManager.add_building(id,"ENERGY_MINE","Anenia")
+	for i in range(5):
+		InventoryManager.add_building(id,"MILITARY_STATION",system_name)
 	ResourcesPanel.update_metals(100,id)
 	ResourcesPanel.update_fuel(5000,id)
 	ResourcesPanel.update_energy(500,id)
 
-func _start_loaded_game():
-	Network.next_turn(Network.active_id,Database.PLAYERS[Network.active_id][0])
+## FOR LOADING GAMES
+#func _start_loaded_game():
+#	Network.next_turn(Network.active_id,Database.PLAYERS[Network.active_id][0])
 
 
 ## (_start_game_org) Adds the starting buildings, ships, and resources for all players.
@@ -127,10 +123,7 @@ func _start_game_org():
 		var username = Database.PLANETS[planet]
 		for id in Database.PLAYERS.keys(): #0 or 1
 			if Database.PLAYERS[id][0] == username:
-				if planet == "Botra" and username != "":
-					starting_inventory(username,id,4)
-				if planet == "Anaxes" and username != "":
-					starting_inventory(username,id,1)
+				starting_inventory(username,id,planet)
 	if Database.LOCAL_ID == 0:
 		Network.next_player(1)
 

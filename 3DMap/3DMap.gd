@@ -76,6 +76,27 @@ func _input(event: InputEvent) -> void:
 		close_window()
 
 func _ready() -> void:
+	# Create lanes between planets.
+	var MAP = Database.MAP
+	var ids = MAP.get_point_connections(1)
+	
+	for id in ids:
+		var connected_ids = MAP.get_point_connections(id)
+		for connected_id in connected_ids:
+			if connected_id > id:  # Avoids duplicating capsules
+				var point_1 = MAP.get_point_position(id)
+				var point_2 = MAP.get_point_position(connected_id)
+				var midpoint = point_1.linear_interpolate(point_2, 0.5)
+				var distance = point_1.distance_to(point_2)
+				var direction = (point_2 - point_1).normalized()
+				var up = Vector3(0, 1, 0)
+				var quat = Quat(up.direction_to(direction))
+				var capsule = MeshInstance.new()
+				capsule.mesh = CapsuleMesh.new()
+				capsule.mesh.mid_height = distance
+				capsule.transform.origin = midpoint
+				capsule.transform.basis = Basis(quat)
+				get_node("Galaxy").add_child(capsule)
 	for child in vbox.get_children():
 		child.connect("pressed",self,"sector_pressed",[child])
 	#var instance = load("res://MapEnv.tscn")

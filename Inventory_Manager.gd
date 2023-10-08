@@ -14,32 +14,27 @@ func _ready() -> void:
 #### ADDING OBJECTS ####
 # Args [player's id that is getting the new object, type (e.g what kind of ship) and where they're putting it]
 func add_building(playerid,type,planetname):
-	for system in Database.GALACTIC_DATA.keys():
-		for solar in Database.GALACTIC_DATA[system].keys():
-			for planet in Database.GALACTIC_DATA[system][solar].keys():
-				if planet == planetname:
-					var building_id = "BUILDING-"+type+"-"+str(Database.global_id_counter)
-					Database.GALACTIC_DATA[system][solar][planet][building_id] = Database.BUILDINGS[type].duplicate()
-					Database.GALACTIC_DATA[system][solar][planet][building_id]["OWNER"] = playerid
-					Database.global_id_counter += 1
-
+	for solar in Database.GALACTIC_DATA.keys():
+		for object in Database.GALACTIC_DATA[solar].keys():
+			if object == planetname:
+				var building_id = "BUILDING-"+type+"-"+str(Database.global_id_counter)
+				Database.GALACTIC_DATA[solar][object][building_id] = Database.BUILDINGS[type].duplicate()
+				Database.GALACTIC_DATA[solar][object][building_id]["OWNER"] = playerid
+				Database.global_id_counter += 1
 func add_ship(playerid,type,solar_id):
-	for system in Database.GALACTIC_DATA.keys():
-		for solar in Database.GALACTIC_DATA[system].keys():
-			if solar == solar_id:
-				var ship_id = "SHIP-"+type+"-"+str(Database.global_id_counter)
-				Database.GALACTIC_DATA[system][solar][ship_id] = Database.SHIPS[type].duplicate()
-				Database.GALACTIC_DATA[system][solar][ship_id]["OWNER"] = playerid
-				Database.global_id_counter += 1
-
+	for solar in Database.GALACTIC_DATA.keys():
+		if solar == solar_id:
+			var ship_id = "SHIP-"+type+"-"+str(Database.global_id_counter)
+			Database.GALACTIC_DATA[solar][ship_id] = Database.SHIPS[type].duplicate()
+			Database.GALACTIC_DATA[solar][ship_id]["OWNER"] = playerid
+			Database.global_id_counter += 1
 func add_supplier(playerid,type,supplyhub_id):
-	for system in Database.GALACTIC_DATA.keys():
-		for solar in Database.GALACTIC_DATA[system].keys():
-			if solar == supplyhub_id:
-				var supplier_id = "SUPPLIER-"+type+"-"+str(Database.global_id_counter)
-				Database.GALACTIC_DATA[system][solar][supplier_id] = Database.SUPPLIERS[type].duplicate()
-				Database.GALACTIC_DATA[system][solar][supplier_id]["OWNER"] = playerid
-				Database.global_id_counter += 1
+	for solar in Database.GALACTIC_DATA.keys():
+		if solar == supplyhub_id:
+			var supplier_id = "SUPPLIER-"+type+"-"+str(Database.global_id_counter)
+			Database.GALACTIC_DATA[solar][supplier_id] = Database.SUPPLIERS[type].duplicate()
+			Database.GALACTIC_DATA[solar][supplier_id]["OWNER"] = playerid
+			Database.global_id_counter += 1
 
 func move_ship(start,destination,ship_id,packeted):
 	var cache = ["",{}] #shipid, ship data

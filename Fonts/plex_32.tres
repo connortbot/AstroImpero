@@ -1,7 +1,7 @@
 [gd_resource type="DynamicFont" load_steps=2 format=2]
 
 [sub_resource type="DynamicFontData" id=1]
-font_path = "res://IBMPlexMono-SemiBold.ttf"
+font_path = "res://Fonts/IBMPlexMono-SemiBold.ttf"
 
 [resource]
 size = 32

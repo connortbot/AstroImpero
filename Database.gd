@@ -1,6 +1,6 @@
 extends Node #AUTOLOADED ON START as "Database"
 
-############### SPACE TERMINALS v0.9.4 ###############
+############### SPACE TERMINALS v0.9.5 ###############
 ## Created by Connor T. Loi ##
 
 ## Design Recipe for all functions ##
@@ -12,20 +12,10 @@ extends Node #AUTOLOADED ON START as "Database"
 
 
 ############### MAIN AGENDA ###############
-# Window buttons don't work
+# Continue Map reform update
+# Fix all game states for new GALACTIC_DATA structure
+# Change movement and supply to astar pathing
 ############### MAIN AGENDA ###############
-
-
-#### FULL FIRST RELEASE ####
-#more accessible ui information (buffs, modifiers, hover windows)
-#battle window debuffs and buffs icons
-
-#### Further Updates ####
-#high command
-#troop exp
-#space superiority
-#stations (forts)
-#ship upgrades
 
 
 ############### SPACE TERMINALS ###############
@@ -97,143 +87,76 @@ var SUPPLY_SYSTEM = {
 }
 
 var GALACTIC_DATA = {
-	#[SystemID][SystemName,Solar][Planet,Ships][Owner,Buildings]
-	1: {
-		101: {
-			"Anaxes": {
-				"Owner": "",
-				"building_slots": 3
-			},
-			"Isaac": {
-				"Owner": "",
-				"building_slots": 1
-			}
-		},
-		102: {},
-		103: {},
-		104: {},
-		105: {}
-	},
-	2: {
-		201: {},
-		202: {},
-		203: {
-			"Hosharri": {
-				"Owner": "",
-				"building_slots": 2
-			}
-		},
-		204: {},
-		205: {}
-	},
-	3: {
-		301: {},
-		302: {},
-		303: {},
-		304: {},
-		305: {}
-	},
-	4: {
-		401: {
-			"Botra": {
-				"Owner": "",
-				"building_slots": 4
-			},
-			"Yaowei": {
-				"Owner": "",
-				"building_slots": 2
-			}
-		},
-		402: {},
-		403: {},
-		404: {},
-		405: {
-			"Ustoh": {
-				"Owner": "",
-				"building_slots": 1
-			}
+	"Anaxes": {
+		"Anenia": {
+			"Owner": "",
+			"building_slots": 10
 		}
 	},
-	5: {
-		501: {},
-		502: {
-			"Sol": {
-				"Owner": "",
-				"building_slots": 1
-			}
-		},
-		503: {},
-		504: {
-			"Fol": {
-				"Owner": "",
-				"building_slots": 1
-			}
-		},
-		505: {
-			"Iol": {
-				"Owner": "",
-				"building_slots": 1
-			}
+	"Agumuun": {
+		"Ichiza": {
+			"Owner": "",
+			"building_slots": 6
 		}
 	},
-	6: {
-		601: {},
-		602: {},
-		603: {},
-		604: {},
-		605: {
-			"Autumn": {
-				"Owner": "",
-				"building_slots": 6
-			}
+	"Isaac": {
+		"Las Elfar": {
+			"Owner": "",
+			"building_slots": 2
 		}
 	},
-	7: {
-		701: {
-			"Agumuun": {
-				"Owner": "",
-				"building_slots": 5
-			}
-		},
-		702: {
-			"Naivoh": {
-				"Owner": "",
-				"building_slots": 1
-			}
-		},
-		703: {},
-		704: {},
-		705: {}
+	"Riga": {
+		"Taxalis": {
+			"Owner": "",
+			"building_slots": 3
+		}
 	},
-	8: {
-		801: {
-			"Riga": {
-				"Owner": "",
-				"building_slots": 6
-			},
-			"Edavellir": {
-				"Owner": "",
-				"building_slots": 2
-			}
-		},
-		802: {},
-		803: {},
-		804: {},
-		805: {}
+	"Botra": {
+		"Boshaa": {
+			"Owner": "",
+			"building_slots": 10
+		}
 	},
-	9: {
-		901: {},
-		902: {
-			"Hestea": {
-				"Owner": "",
-				"building_slots": 2
-			}
-		},
-		903: {},
-		904: {},
-		905: {}
-	},
+	"Autumn": {
+		"Caesar": {
+			"Owner": "",
+			"building_slots": 2
+		}
+	}
 }
+class MapAStar:
+	extends AStar
+	func _compute_cost(u,v):
+		return 1
+	func _estimate_cost(u, v):
+		return 0
+
+var MAP = MapAStar.new()
+func map():
+	MAP.add_point(1,Vector3(-5,1,50)) #Anaxes
+	MAP.add_point(2,Vector3(-45,6,34)) #Agumuun
+	MAP.add_point(3,Vector3(42,-9,9)) #Isaac
+	MAP.add_point(4,Vector3(-25,2,100)) #Riga
+	MAP.add_point(5,Vector3(-105,-15,67)) #Botra
+	MAP.add_point(6,Vector3(63,15,-25)) #Autumn
+
+	### AGUMUUN CONNECTIONS ###
+	MAP.connect_points(2, 1, true)
+	MAP.connect_points(2, 4, true)
+	MAP.connect_points(2, 5, true)
+	MAP.connect_points(2, 6, true)
+
+	MAP.connect_points(3,1,true)
+	MAP.connect_points(5,4,true)
+	#MISSING: Edavellir, Sol, Fol, Pol, Ustoh, Naivoh, Yaowei, Hestea, Hosharri
+
+# generating a lane -> midpoint = (-25,3.5,42)
+# midheight -> (40,5,16) -> sqr(40^2+5^2+16^2)
+# angle calc on chatgpt
+
+func _ready() -> void:
+	map()
+	return
 
 var SHIPS = {
 	"DESTROYER": {
@@ -417,18 +340,6 @@ var BUILDINGS = {
 		"OWNER": 0,
 		"BUILD_TIME": 3
 	}
-}
-
-var SYSTEM_SIBLINGS = {
-	1: [2,7,8,9],
-	2: [1,3,7,8],
-	3: [2,4,8],
-	4: [3,5,8],
-	5: [4,6],
-	6: [5,7,9],
-	7: [1,2,6],
-	8: [1,2,3,4,9],
-	9: [1,6,8],
 }
 
 

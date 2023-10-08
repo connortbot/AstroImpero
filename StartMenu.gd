@@ -20,21 +20,21 @@ func _ready() -> void:
 	client.connect("client_planet_selection",$LobbyMenu/LobbyMenu,"client_planet_selection")
 	client.connect("update_planetslist",$LobbyMenu/LobbyMenu,"update_planetslist")
 	Database.reset()
-	$AnimationPlayer.play("FadeIn")
-	second_anim = "Start"
+	$AnimationPlayer.play("1 FadeIn")
+	second_anim = "2 Start"
 
 func _on_Button_pressed() -> void:
-	$AnimationPlayer.play("ToServerMenu")
+	$AnimationPlayer.play("3 ToServerMenu")
 
 
 func _on_NewGame_pressed() -> void:
-	$AnimationPlayer.play("ToLobbyMenu")
+	$AnimationPlayer.play("5 ToLobbyMenu")
 	yield(client.create_match(),"completed")
 	Database.LOCAL_ID = 0
 	$LobbyMenu/LobbyMenu.readyup("create")
 	
 func _on_JoinGame_pressed():
-	$AnimationPlayer.play("ToLobbyMenu")
+	$AnimationPlayer.play("5 ToLobbyMenu")
 	yield(client.join_match(join_matchID),"completed")
 	Database.LOCAL_ID = 1
 	$LobbyMenu/LobbyMenu.readyup("join")
@@ -51,6 +51,7 @@ func _on_Music_finished() -> void:
 
 
 func _on_LoadGameButton_pressed() -> void:
+	"""
 	$StartMenu/LoadGameMenu.visible = true
 	$StartMenu/NewGameMenu.visible = false
 	var found = false
@@ -71,13 +72,15 @@ func _on_LoadGameButton_pressed() -> void:
 			loadedgame.get_node("Button").text = "Save "+str(i)
 			loadedgame.savenum = i
 			get_node("StartMenu/LoadGameMenu/ScrollContainer/VBoxContainer").add_child(loadedgame)
+	"""
+	pass
 	
 
 
 func _on_CreateGameButton_pressed():
 	$ServerMenu/JoinGameMenu.visible = false
 	$ServerMenu/CreateGameMenu.visible = true
-	$AnimationPlayer.play("NewGame")
+	$AnimationPlayer.play("4.N NewGame")
 
 func _on_CopyID_pressed():
 	OS.set_clipboard(client.matchID)
@@ -86,7 +89,7 @@ func _on_CopyID_pressed():
 func _on_JoinGameButton_pressed():
 	$ServerMenu/JoinGameMenu.visible = true
 	$ServerMenu/CreateGameMenu.visible = false
-	$AnimationPlayer.play("JoinGame")
+	$AnimationPlayer.play("4.J JoinGame")
 
 
 func disallow_input(nodes):

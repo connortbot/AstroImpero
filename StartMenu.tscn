@@ -1,47 +1,19 @@
 [gd_scene load_steps=35 format=2]
 
 [ext_resource path="res://plex_20.tres" type="DynamicFont" id=1]
-[ext_resource path="res://LCARSText.tres" type="DynamicFont" id=2]
+[ext_resource path="res://Fonts/LCARSText.tres" type="DynamicFont" id=2]
 [ext_resource path="res://StartMenu.gd" type="Script" id=3]
 [ext_resource path="res://MenuBackground.tscn" type="PackedScene" id=4]
-[ext_resource path="res://Edge of the Galaxy.tres" type="DynamicFont" id=5]
+[ext_resource path="res://Fonts/Edge of the Galaxy.tres" type="DynamicFont" id=5]
 [ext_resource path="res://GUI_Assets/Background.png" type="Texture" id=6]
-[ext_resource path="res://Nova_Light_Ultra.ttf" type="DynamicFontData" id=7]
+[ext_resource path="res://Fonts/Nova_Light_Ultra.ttf" type="DynamicFontData" id=7]
 [ext_resource path="res://LobbyMenu.gd" type="Script" id=8]
-[ext_resource path="res://EdgeOfTheGalaxy-Regular.otf" type="DynamicFontData" id=9]
+[ext_resource path="res://Fonts/EdgeOfTheGalaxy-Regular.otf" type="DynamicFontData" id=9]
 [ext_resource path="res://OST/Menu Music.wav" type="AudioStream" id=10]
-
-[sub_resource type="Animation" id=1]
-resource_name = "BacktoServerMenu"
-length = 5.0
-step = 0.025
-tracks/0/type = "value"
-tracks/0/path = NodePath("ServerMenu:rect_position")
-tracks/0/interp = 1
-tracks/0/loop_wrap = true
-tracks/0/imported = false
-tracks/0/enabled = true
-tracks/0/keys = {
-"times": PoolRealArray( 0.025, 1.325, 2.025 ),
-"transitions": PoolRealArray( 1, 0.25, 1 ),
-"update": 0,
-"values": [ Vector2( 1500, 0 ), Vector2( 1500, 0 ), Vector2( 0, 0 ) ]
-}
-tracks/1/type = "value"
-tracks/1/path = NodePath("LobbyMenu:rect_position")
-tracks/1/interp = 1
-tracks/1/loop_wrap = true
-tracks/1/imported = false
-tracks/1/enabled = true
-tracks/1/keys = {
-"times": PoolRealArray( 0, 0.325, 1.05, 6.025 ),
-"transitions": PoolRealArray( 1, 0.25, 1, 1 ),
-"update": 0,
-"values": [ Vector2( 0, 0 ), Vector2( 0, 0 ), Vector2( -1500, 0 ), Vector2( -1500, 0 ) ]
-}
+[ext_resource path="res://Fonts/nova40.tres" type="DynamicFont" id=11]
 
 [sub_resource type="Animation" id=2]
-resource_name = "FadeIn"
+resource_name = "1 FadeIn"
 length = 4.0
 tracks/0/type = "value"
 tracks/0/path = NodePath("FadeIn:modulate")
@@ -68,8 +40,126 @@ tracks/1/keys = {
 "values": [ true ]
 }
 
+[sub_resource type="Animation" id=5]
+resource_name = "2 Start"
+length = 4.0
+step = 0.025
+tracks/0/type = "value"
+tracks/0/path = NodePath("StartMenu/NewGame:rect_scale")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/keys = {
+"times": PoolRealArray( 0, 1.65, 2.6 ),
+"transitions": PoolRealArray( 1, 0.267943, 1 ),
+"update": 0,
+"values": [ Vector2( 0, 1 ), Vector2( 0, 1 ), Vector2( 1, 1 ) ]
+}
+tracks/1/type = "value"
+tracks/1/path = NodePath("StartMenu/NewGame/Button:visible")
+tracks/1/interp = 1
+tracks/1/loop_wrap = true
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/keys = {
+"times": PoolRealArray( 0, 1.65, 2.6, 2.9, 2.975 ),
+"transitions": PoolRealArray( 1, 1, 1, 1, 1 ),
+"update": 1,
+"values": [ false, false, true, false, true ]
+}
+tracks/2/type = "value"
+tracks/2/path = NodePath("StartMenu/LoadGame:rect_scale")
+tracks/2/interp = 1
+tracks/2/loop_wrap = true
+tracks/2/imported = false
+tracks/2/enabled = true
+tracks/2/keys = {
+"times": PoolRealArray( 0, 1.775, 2.725 ),
+"transitions": PoolRealArray( 1, 0.25, 1 ),
+"update": 0,
+"values": [ Vector2( 0, 1 ), Vector2( 1e-05, 1 ), Vector2( 1, 1 ) ]
+}
+tracks/3/type = "value"
+tracks/3/path = NodePath("StartMenu/LoadGame/LoadGameButton:visible")
+tracks/3/interp = 1
+tracks/3/loop_wrap = true
+tracks/3/imported = false
+tracks/3/enabled = true
+tracks/3/keys = {
+"times": PoolRealArray( 0, 1.775, 2.725, 3.025, 3.1 ),
+"transitions": PoolRealArray( 1, 1, 1, 1, 1 ),
+"update": 1,
+"values": [ false, false, true, false, true ]
+}
+
+[sub_resource type="Animation" id=7]
+resource_name = "3 ToServerMenu"
+length = 5.0
+step = 0.025
+tracks/0/type = "value"
+tracks/0/path = NodePath("StartMenu:rect_position")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/keys = {
+"times": PoolRealArray( 0, 1 ),
+"transitions": PoolRealArray( 0.2501, 1 ),
+"update": 0,
+"values": [ Vector2( 0, 0 ), Vector2( 1900, 0 ) ]
+}
+tracks/1/type = "value"
+tracks/1/path = NodePath("ServerMenu:rect_position")
+tracks/1/interp = 1
+tracks/1/loop_wrap = true
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/keys = {
+"times": PoolRealArray( 0, 1.3, 2 ),
+"transitions": PoolRealArray( 1, 0.25, 1 ),
+"update": 0,
+"values": [ Vector2( -1500, 0 ), Vector2( -1500, 0 ), Vector2( 0, 0 ) ]
+}
+tracks/2/type = "value"
+tracks/2/path = NodePath("ServerMenu/FirstButtons:rect_scale")
+tracks/2/interp = 1
+tracks/2/loop_wrap = true
+tracks/2/imported = false
+tracks/2/enabled = true
+tracks/2/keys = {
+"times": PoolRealArray( 0, 2, 2.5 ),
+"transitions": PoolRealArray( 1, 0.25, 1 ),
+"update": 0,
+"values": [ Vector2( 0, 1 ), Vector2( 0, 1 ), Vector2( 1, 1 ) ]
+}
+tracks/3/type = "value"
+tracks/3/path = NodePath("ServerMenu/FirstButtons/CreateGame/CreateGameButton:visible")
+tracks/3/interp = 1
+tracks/3/loop_wrap = true
+tracks/3/imported = false
+tracks/3/enabled = true
+tracks/3/keys = {
+"times": PoolRealArray( 0, 2.375, 2.8, 2.93, 2.98 ),
+"transitions": PoolRealArray( 1, 1, 1, 1, 1 ),
+"update": 1,
+"values": [ false, false, true, false, true ]
+}
+tracks/4/type = "value"
+tracks/4/path = NodePath("ServerMenu/FirstButtons/JoinGame/JoinGameButton:visible")
+tracks/4/interp = 1
+tracks/4/loop_wrap = true
+tracks/4/imported = false
+tracks/4/enabled = true
+tracks/4/keys = {
+"times": PoolRealArray( 0, 2.375, 2.8, 2.93, 2.98 ),
+"transitions": PoolRealArray( 1, 1, 1, 1, 1 ),
+"update": 1,
+"values": [ false, false, true, false, true ]
+}
+
 [sub_resource type="Animation" id=3]
-resource_name = "JoinGame"
+resource_name = "4.J JoinGame"
 length = 4.0
 step = 0.025
 tracks/0/type = "value"
@@ -134,6 +224,7 @@ tracks/4/keys = {
 }
 
 [sub_resource type="Animation" id=4]
+resource_name = "4.N NewGame"
 length = 4.0
 step = 0.025
 tracks/0/type = "value"
@@ -209,59 +300,8 @@ tracks/5/keys = {
 "values": [ true ]
 }
 
-[sub_resource type="Animation" id=5]
-length = 4.0
-step = 0.025
-tracks/0/type = "value"
-tracks/0/path = NodePath("StartMenu/NewGame:rect_scale")
-tracks/0/interp = 1
-tracks/0/loop_wrap = true
-tracks/0/imported = false
-tracks/0/enabled = true
-tracks/0/keys = {
-"times": PoolRealArray( 0, 1.65, 2.6 ),
-"transitions": PoolRealArray( 1, 0.267943, 1 ),
-"update": 0,
-"values": [ Vector2( 0, 1 ), Vector2( 0, 1 ), Vector2( 1, 1 ) ]
-}
-tracks/1/type = "value"
-tracks/1/path = NodePath("StartMenu/NewGame/Button:visible")
-tracks/1/interp = 1
-tracks/1/loop_wrap = true
-tracks/1/imported = false
-tracks/1/enabled = true
-tracks/1/keys = {
-"times": PoolRealArray( 0, 1.65, 2.6, 2.9, 2.975 ),
-"transitions": PoolRealArray( 1, 1, 1, 1, 1 ),
-"update": 1,
-"values": [ false, false, true, false, true ]
-}
-tracks/2/type = "value"
-tracks/2/path = NodePath("StartMenu/LoadGame:rect_scale")
-tracks/2/interp = 1
-tracks/2/loop_wrap = true
-tracks/2/imported = false
-tracks/2/enabled = true
-tracks/2/keys = {
-"times": PoolRealArray( 0, 1.775, 2.725 ),
-"transitions": PoolRealArray( 1, 0.25, 1 ),
-"update": 0,
-"values": [ Vector2( 0, 1 ), Vector2( 1e-05, 1 ), Vector2( 1, 1 ) ]
-}
-tracks/3/type = "value"
-tracks/3/path = NodePath("StartMenu/LoadGame/LoadGameButton:visible")
-tracks/3/interp = 1
-tracks/3/loop_wrap = true
-tracks/3/imported = false
-tracks/3/enabled = true
-tracks/3/keys = {
-"times": PoolRealArray( 0, 1.775, 2.725, 3.025, 3.1 ),
-"transitions": PoolRealArray( 1, 1, 1, 1, 1 ),
-"update": 1,
-"values": [ false, false, true, false, true ]
-}
-
 [sub_resource type="Animation" id=6]
+resource_name = "5 ToLobbyMenu"
 length = 5.0
 step = 0.025
 tracks/0/type = "value"
@@ -274,7 +314,7 @@ tracks/0/keys = {
 "times": PoolRealArray( 0, 1 ),
 "transitions": PoolRealArray( 0.2501, 1 ),
 "update": 0,
-"values": [ Vector2( 0, 0 ), Vector2( 1500, 0 ) ]
+"values": [ Vector2( 0, 0 ), Vector2( 1900, 0 ) ]
 }
 tracks/1/type = "value"
 tracks/1/path = NodePath("LobbyMenu:rect_position")
@@ -286,7 +326,7 @@ tracks/1/keys = {
 "times": PoolRealArray( 0, 1.3, 2 ),
 "transitions": PoolRealArray( 1, 0.25, 1 ),
 "update": 0,
-"values": [ Vector2( -1500, 0 ), Vector2( -1500, 0 ), Vector2( 0, 0 ) ]
+"values": [ Vector2( -1500, 0 ), Vector2( -1500, 0 ), Vector2( 315, 0 ) ]
 }
 tracks/2/type = "value"
 tracks/2/path = NodePath("LobbyMenu/LobbyMenu/MarginContainer/VBoxContainer/HBoxContainer/PlayersList/PlayerList/MarginContainer/Scroll/VBoxContainer:rect_scale")
@@ -421,69 +461,33 @@ tracks/12/keys = {
 "values": [ false, true ]
 }
 
-[sub_resource type="Animation" id=7]
-resource_name = "ToServerMenu"
+[sub_resource type="Animation" id=1]
+resource_name = "6 BacktoServerMenu"
 length = 5.0
 step = 0.025
 tracks/0/type = "value"
-tracks/0/path = NodePath("StartMenu:rect_position")
+tracks/0/path = NodePath("ServerMenu:rect_position")
 tracks/0/interp = 1
 tracks/0/loop_wrap = true
 tracks/0/imported = false
 tracks/0/enabled = true
 tracks/0/keys = {
-"times": PoolRealArray( 0, 1 ),
-"transitions": PoolRealArray( 0.2501, 1 ),
+"times": PoolRealArray( 0.025, 1.325, 2.025 ),
+"transitions": PoolRealArray( 1, 0.25, 1 ),
 "update": 0,
-"values": [ Vector2( 0, 0 ), Vector2( 1500, 0 ) ]
+"values": [ Vector2( 1500, 0 ), Vector2( 1500, 0 ), Vector2( 0, 0 ) ]
 }
 tracks/1/type = "value"
-tracks/1/path = NodePath("ServerMenu:rect_position")
+tracks/1/path = NodePath("LobbyMenu:rect_position")
 tracks/1/interp = 1
 tracks/1/loop_wrap = true
 tracks/1/imported = false
 tracks/1/enabled = true
 tracks/1/keys = {
-"times": PoolRealArray( 0, 1.3, 2 ),
-"transitions": PoolRealArray( 1, 0.25, 1 ),
+"times": PoolRealArray( 0, 0.325, 1.05, 6.025 ),
+"transitions": PoolRealArray( 1, 0.25, 1, 1 ),
 "update": 0,
-"values": [ Vector2( -1500, 0 ), Vector2( -1500, 0 ), Vector2( 0, 0 ) ]
-}
-tracks/2/type = "value"
-tracks/2/path = NodePath("ServerMenu/FirstButtons:rect_scale")
-tracks/2/interp = 1
-tracks/2/loop_wrap = true
-tracks/2/imported = false
-tracks/2/enabled = true
-tracks/2/keys = {
-"times": PoolRealArray( 0, 2, 2.5 ),
-"transitions": PoolRealArray( 1, 0.25, 1 ),
-"update": 0,
-"values": [ Vector2( 0, 1 ), Vector2( 0, 1 ), Vector2( 1, 1 ) ]
-}
-tracks/3/type = "value"
-tracks/3/path = NodePath("ServerMenu/FirstButtons/CreateGame/CreateGameButton:visible")
-tracks/3/interp = 1
-tracks/3/loop_wrap = true
-tracks/3/imported = false
-tracks/3/enabled = true
-tracks/3/keys = {
-"times": PoolRealArray( 0, 2.375, 2.8, 2.93, 2.98 ),
-"transitions": PoolRealArray( 1, 1, 1, 1, 1 ),
-"update": 1,
-"values": [ false, false, true, false, true ]
-}
-tracks/4/type = "value"
-tracks/4/path = NodePath("ServerMenu/FirstButtons/JoinGame/JoinGameButton:visible")
-tracks/4/interp = 1
-tracks/4/loop_wrap = true
-tracks/4/imported = false
-tracks/4/enabled = true
-tracks/4/keys = {
-"times": PoolRealArray( 0, 2.375, 2.8, 2.93, 2.98 ),
-"transitions": PoolRealArray( 1, 1, 1, 1, 1 ),
-"update": 1,
-"values": [ false, false, true, false, true ]
+"values": [ Vector2( 0, 0 ), Vector2( 0, 0 ), Vector2( -1500, 0 ), Vector2( -1500, 0 ) ]
 }
 
 [sub_resource type="DynamicFont" id=8]
@@ -516,33 +520,27 @@ font_data = ExtResource( 7 )
 
 [sub_resource type="StyleBoxEmpty" id=15]
 
-[sub_resource type="DynamicFont" id=16]
-size = 40
-use_mipmaps = true
-use_filter = true
-font_data = ExtResource( 7 )
-
-[sub_resource type="StyleBoxFlat" id=17]
+[sub_resource type="StyleBoxFlat" id=16]
 bg_color = Color( 0, 0, 0, 0.6 )
 
-[sub_resource type="StyleBoxEmpty" id=18]
+[sub_resource type="StyleBoxEmpty" id=17]
+
+[sub_resource type="DynamicFont" id=18]
+size = 40
+font_data = ExtResource( 9 )
 
 [sub_resource type="DynamicFont" id=19]
 size = 40
 font_data = ExtResource( 9 )
 
-[sub_resource type="DynamicFont" id=20]
-size = 40
-font_data = ExtResource( 9 )
+[sub_resource type="StyleBoxEmpty" id=20]
 
-[sub_resource type="StyleBoxEmpty" id=21]
-
-[sub_resource type="StyleBoxFlat" id=22]
+[sub_resource type="StyleBoxFlat" id=21]
 bg_color = Color( 0, 0, 0, 0.68 )
 
-[sub_resource type="StyleBoxEmpty" id=23]
+[sub_resource type="StyleBoxEmpty" id=22]
 
-[sub_resource type="DynamicFont" id=24]
+[sub_resource type="DynamicFont" id=23]
 size = 40
 use_mipmaps = true
 use_filter = true
@@ -553,9 +551,6 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 rect_pivot_offset = Vector2( 500.418, -199.525 )
 script = ExtResource( 3 )
-__meta__ = {
-"_edit_use_anchors_": false
-}
 
 [node name="Background" type="ViewportContainer" parent="."]
 margin_right = 1920.0
@@ -573,13 +568,13 @@ gui_disable_input = true
 [node name="MenuBackground" parent="Background/Viewport" instance=ExtResource( 4 )]
 
 [node name="AnimationPlayer" type="AnimationPlayer" parent="."]
-anims/BacktoServerMenu = SubResource( 1 )
-anims/FadeIn = SubResource( 2 )
-anims/JoinGame = SubResource( 3 )
-anims/NewGame = SubResource( 4 )
-anims/Start = SubResource( 5 )
-anims/ToLobbyMenu = SubResource( 6 )
-anims/ToServerMenu = SubResource( 7 )
+"anims/1 FadeIn" = SubResource( 2 )
+"anims/2 Start" = SubResource( 5 )
+"anims/3 ToServerMenu" = SubResource( 7 )
+"anims/4.J JoinGame" = SubResource( 3 )
+"anims/4.N NewGame" = SubResource( 4 )
+"anims/5 ToLobbyMenu" = SubResource( 6 )
+"anims/6 BacktoServerMenu" = SubResource( 1 )
 
 [node name="StartMenu" type="Control" parent="."]
 margin_right = 40.0
@@ -684,8 +679,8 @@ size_flags_vertical = 3
 [node name="ServerMenu" type="Control" parent="."]
 anchor_right = 1.0
 anchor_bottom = 1.0
-margin_left = 1500.0
-margin_right = 1500.0
+margin_left = -1500.0
+margin_right = -1500.0
 
 [node name="Title" type="Label" parent="ServerMenu"]
 anchor_left = 0.5
@@ -700,9 +695,9 @@ align = 1
 valign = 1
 
 [node name="FirstButtons" type="VBoxContainer" parent="ServerMenu"]
-margin_left = 277.0
+margin_left = 277.943
 margin_top = 291.0
-margin_right = 481.0
+margin_right = 481.943
 margin_bottom = 405.0
 rect_scale = Vector2( 1e-05, 1 )
 custom_constants/separation = 10
@@ -1087,6 +1082,7 @@ margin_bottom = 290.0
 [node name="VBoxContainer" type="VBoxContainer" parent="LobbyMenu/LobbyMenu/MarginContainer/VBoxContainer/HBoxContainer/PlayersList/PlayerList/MarginContainer/Scroll"]
 margin_right = 280.0
 margin_bottom = 280.0
+rect_scale = Vector2( 1e-05, 1 )
 size_flags_horizontal = 3
 size_flags_vertical = 3
 custom_constants/separation = 11
@@ -1116,7 +1112,7 @@ margin_top = 12.0
 margin_right = 275.0
 margin_bottom = 47.0
 custom_styles/normal = SubResource( 13 )
-custom_fonts/font = ExtResource( 2 )
+custom_fonts/font = ExtResource( 11 )
 text = "Player 1"
 align = 1
 
@@ -1146,7 +1142,7 @@ margin_top = 12.0
 margin_right = 275.0
 margin_bottom = 47.0
 custom_styles/normal = SubResource( 13 )
-custom_fonts/font = SubResource( 16 )
+custom_fonts/font = ExtResource( 11 )
 text = "Player 2"
 align = 1
 
@@ -1154,6 +1150,7 @@ align = 1
 margin_left = 375.0
 margin_right = 595.0
 margin_bottom = 300.0
+rect_scale = Vector2( 1e-05, 1 )
 custom_constants/separation = 25
 alignment = 1
 
@@ -1162,14 +1159,14 @@ margin_top = 67.0
 margin_right = 220.0
 margin_bottom = 137.0
 rect_min_size = Vector2( 220, 70 )
-custom_styles/panel = SubResource( 17 )
+custom_styles/panel = SubResource( 16 )
 
 [node name="Button" type="Button" parent="LobbyMenu/LobbyMenu/MarginContainer/VBoxContainer/HBoxContainer/Buttons/CloseLobby"]
 visible = false
 margin_right = 220.0
 margin_bottom = 70.0
-custom_styles/normal = SubResource( 18 )
-custom_fonts/font = SubResource( 19 )
+custom_styles/normal = SubResource( 17 )
+custom_fonts/font = SubResource( 18 )
 text = "Back"
 
 [node name="StartGame" type="PanelContainer" parent="LobbyMenu/LobbyMenu/MarginContainer/VBoxContainer/HBoxContainer/Buttons"]
@@ -1177,14 +1174,14 @@ margin_top = 162.0
 margin_right = 220.0
 margin_bottom = 232.0
 rect_min_size = Vector2( 220, 70 )
-custom_styles/panel = SubResource( 17 )
+custom_styles/panel = SubResource( 16 )
 
 [node name="StartButton" type="Button" parent="LobbyMenu/LobbyMenu/MarginContainer/VBoxContainer/HBoxContainer/Buttons/StartGame"]
 visible = false
 margin_right = 220.0
 margin_bottom = 70.0
-custom_styles/normal = SubResource( 18 )
-custom_fonts/font = SubResource( 20 )
+custom_styles/normal = SubResource( 17 )
+custom_fonts/font = SubResource( 19 )
 text = "Start Game"
 
 [node name="PlanetsList" type="VBoxContainer" parent="LobbyMenu/LobbyMenu/MarginContainer/VBoxContainer/HBoxContainer"]
@@ -1206,7 +1203,7 @@ margin_right = 300.0
 margin_bottom = 300.0
 rect_min_size = Vector2( 300, 300 )
 size_flags_vertical = 3
-custom_styles/panel = SubResource( 21 )
+custom_styles/panel = SubResource( 20 )
 
 [node name="MarginContainer" type="MarginContainer" parent="LobbyMenu/LobbyMenu/MarginContainer/VBoxContainer/HBoxContainer/PlanetsList/StartingPlanetList"]
 margin_right = 300.0
@@ -1225,6 +1222,7 @@ margin_bottom = 290.0
 [node name="VBoxContainer" type="VBoxContainer" parent="LobbyMenu/LobbyMenu/MarginContainer/VBoxContainer/HBoxContainer/PlanetsList/StartingPlanetList/MarginContainer/Scroll"]
 margin_right = 280.0
 margin_bottom = 280.0
+rect_scale = Vector2( 1e-05, 1 )
 size_flags_horizontal = 3
 size_flags_vertical = 3
 custom_constants/separation = 10
@@ -1233,7 +1231,7 @@ custom_constants/separation = 10
 margin_right = 280.0
 margin_bottom = 60.0
 rect_min_size = Vector2( 0, 60 )
-custom_styles/panel = SubResource( 22 )
+custom_styles/panel = SubResource( 21 )
 
 [node name="MarginContainer" type="MarginContainer" parent="LobbyMenu/LobbyMenu/MarginContainer/VBoxContainer/HBoxContainer/PlanetsList/StartingPlanetList/MarginContainer/Scroll/VBoxContainer/Botra"]
 margin_right = 280.0
@@ -1250,8 +1248,8 @@ margin_top = 5.0
 margin_right = 275.0
 margin_bottom = 55.0
 rect_min_size = Vector2( 0, 37 )
-custom_styles/normal = SubResource( 23 )
-custom_fonts/font = SubResource( 24 )
+custom_styles/normal = SubResource( 22 )
+custom_fonts/font = SubResource( 23 )
 text = "Botra"
 
 [node name="Anaxes" type="PanelContainer" parent="LobbyMenu/LobbyMenu/MarginContainer/VBoxContainer/HBoxContainer/PlanetsList/StartingPlanetList/MarginContainer/Scroll/VBoxContainer"]
@@ -1259,7 +1257,7 @@ margin_top = 70.0
 margin_right = 280.0
 margin_bottom = 130.0
 rect_min_size = Vector2( 0, 60 )
-custom_styles/panel = SubResource( 22 )
+custom_styles/panel = SubResource( 21 )
 
 [node name="MarginContainer" type="MarginContainer" parent="LobbyMenu/LobbyMenu/MarginContainer/VBoxContainer/HBoxContainer/PlanetsList/StartingPlanetList/MarginContainer/Scroll/VBoxContainer/Anaxes"]
 margin_right = 280.0
@@ -1276,7 +1274,7 @@ margin_top = 5.0
 margin_right = 275.0
 margin_bottom = 55.0
 rect_min_size = Vector2( 0, 37 )
-custom_styles/normal = SubResource( 23 )
+custom_styles/normal = SubResource( 22 )
 custom_fonts/font = ExtResource( 2 )
 text = "Anaxes"
 

@@ -10,15 +10,11 @@ var players = {}
 #On menu opening
 func readyup(type): #create or join
 	if type == "create":
-		# Update USERNAMES
 		Database.USERNAMES[0] = Database.LOCAL_USERNAME
 		$MarginContainer/VBoxContainer/HBoxContainer/PlayersList/PlayerList/MarginContainer/Scroll/VBoxContainer/Player/MarginContainer/Label.text = Database.USERNAMES[0]
 	if type == "join":
 		$"../..".client.send_match_state({"LOCAL_USERNAME": Database.LOCAL_USERNAME},1)
 	$VBoxContainer/GameID/MarginContainer/GameID.text = "Game ID: "+$"../..".client.matchID
-	#Network.connect("update_clients_playerlist", self, "update_playerlist")
-	#Network.connect("update_planets_list", self, "update_lobby_planetslist")
-	#Network.connect("client_planet_selection", self, "_client_planet_selection")
 #### PLAYER LIST UPDATES ####
 func changed_match_presence(connected_opponents):
 	if Database.LOCAL_ID == 0:

@@ -13,3 +13,4 @@ data_*/
 
 # Folders
 addons/
+*.import

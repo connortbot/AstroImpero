@@ -17,9 +17,10 @@ var session_token
 
 func _ready():
 	# Defining the Client
-	var PORT = 0000
-	var IP = "1.1.1.1"
-	client = Nakama.create_client("defaultkey",IP,PORT,"http")
+	var PORT = 7350
+	var SERVER_IP = "1.1.1.1"
+	var LOCALHOST = "127.0.0.1"
+	client = Nakama.create_client("defaultkey",SERVER_IP,PORT,"http")
 	client.timeout = 100
 	
 	# Device Authentication, and creating Session
@@ -130,7 +131,7 @@ func _on_match_state(p_state: NakamaRTAPI.MatchData):
 		Database.evasion_rands = data["EVASION_RANDS"]
 	if p_state.op_code == 10:
 		if Database.LOCAL_ID == 1:
-			Network.deterministicTurnUpdate()
+			Network.deterministicTurnUpdate(data["active_id"])
 	
 	### OP CODE 11 ###
 	# CALLED BY => host/client

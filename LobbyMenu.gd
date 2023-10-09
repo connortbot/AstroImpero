@@ -3,18 +3,23 @@ extends Control
 var playerlist_instance = preload("res://Instances/playerlist_instance.tscn")
 onready var playerlist = get_node("MarginContainer/VBoxContainer/HBoxContainer/PlayersList/PlayerList/MarginContainer/Scroll/VBoxContainer")
 onready var planetlist = get_node("MarginContainer/VBoxContainer/HBoxContainer/PlanetsList/StartingPlanetList/MarginContainer/Scroll/VBoxContainer")
+onready var client = $"../..".client
 
 #Server uses this dictionary to keep track of players, with ID:Username
 var players = {}
 
 #On menu opening
-func readyup(type): #create or join
+func readyup(type): #create or join\
+	var p1Label = $MarginContainer/VBoxContainer/HBoxContainer/PlayersList/PlayerList/MarginContainer/Scroll/VBoxContainer/Player/MarginContainer/Label
+	var gameIDLabel = $VBoxContainer/GameID/MarginContainer/GameID
 	if type == "create":
 		Database.USERNAMES[0] = Database.LOCAL_USERNAME
-		$MarginContainer/VBoxContainer/HBoxContainer/PlayersList/PlayerList/MarginContainer/Scroll/VBoxContainer/Player/MarginContainer/Label.text = Database.USERNAMES[0]
+		p1Label.text = Database.USERNAMES[0]
 	if type == "join":
-		$"../..".client.send_match_state({"LOCAL_USERNAME": Database.LOCAL_USERNAME},1)
-	$VBoxContainer/GameID/MarginContainer/GameID.text = "Game ID: "+$"../..".client.matchID
+		client.send_match_state({"LOCAL_USERNAME": Database.LOCAL_USERNAME},1)
+	gameIDLabel.text = "Game ID: "+client.matchID
+
+
 #### PLAYER LIST UPDATES ####
 func changed_match_presence(connected_opponents):
 	if Database.LOCAL_ID == 0:
@@ -25,7 +30,7 @@ func changed_match_presence(connected_opponents):
 		$PlayerCount/MarginContainer/PCountLabel.text = "Players: "+str(connected_opponents.size()+1)+"/2"
 func received_p2_username():
 	$MarginContainer/VBoxContainer/HBoxContainer/PlayersList/PlayerList/MarginContainer/Scroll/VBoxContainer/Player2/MarginContainer/Label.text = Database.USERNAMES[1]
-	$"../..".client.send_match_state(Database.USERNAMES,2)
+	client.send_match_state(Database.USERNAMES,2)
 func received_usernames_from_host():
 	$MarginContainer/VBoxContainer/HBoxContainer/PlayersList/PlayerList/MarginContainer/Scroll/VBoxContainer/Player/MarginContainer/Label.text = Database.USERNAMES[0]
 	$MarginContainer/VBoxContainer/HBoxContainer/PlayersList/PlayerList/MarginContainer/Scroll/VBoxContainer/Player2/MarginContainer/Label.text = Database.USERNAMES[1]
@@ -40,12 +45,12 @@ func _on_Button_pressed() -> void:
 		Database.PLANETS[planet] = ""
 	Database.PLAYERS = {}
 	if Database.LOCAL_ID == 0:
-		$"../..".client.leave_match()
+		client.leave_match()
 		get_node("../../AnimationPlayer").play("BacktoServerMenu")
 		yield(get_node("../../AnimationPlayer"),"animation_finished")
 		get_node("../../AnimationPlayer").play("NewGame")
 	else:
-		$"../..".client.leave_match()
+		client.leave_match()
 		get_node("../../AnimationPlayer").play("BacktoServerMenu")
 		yield(get_node("../../AnimationPlayer"),"animation_finished")
 		get_node("../../AnimationPlayer").play("JoinGame")
@@ -65,13 +70,13 @@ func _on_StartButton_pressed() -> void:
 				return
 		Database.PLAYERS[0][0] = Database.USERNAMES[0]
 		Database.PLAYERS[1][0] = Database.USERNAMES[1]
-		$"../..".client.send_match_state({},5)
+		client.send_match_state({},5)
 		Network.start_loading_game()
 		
 		## Set all inputs to take nothing (to allow viewport in Main to take input)
-		$"../..".client.send_match_state({},12)
-		$"../..".disallow_input([$"../.."])
-		$"../../Background/Viewport/MenuBackground".visible = false
+		#client.send_match_state({},12)
+		#$"../..".disallow_input([$"../.."])
+		#$"../../Background/Viewport/MenuBackground".visible = false
 
 func _on_Anaxes_pressed() -> void:
 	assign_planet("Anaxes")
@@ -94,7 +99,8 @@ func update_planetslist(planet_database):
 var selecting_player = 0
 func client_planet_selection(planetname,username): #Host only function
 	planet_select(planetname,username)
-	$"../..".client.send_match_state(Database.PLANETS,3)
+	client.send_match_state(Database.PLANETS,3)
+
 func planet_select(planetname,username): #Host only function
 	if Database.PLANETS[planetname] == "": Database.PLANETS[planetname] = username
 	elif Database.PLANETS[planetname] == username: Database.PLANETS[planetname] = ""
@@ -102,9 +108,10 @@ func planet_select(planetname,username): #Host only function
 		if planet != planetname and Database.PLANETS[planet] == username:
 			Database.PLANETS[planet] = ""
 	update_planetslist(Database.PLANETS)
+
 func assign_planet(planetname):
 	if Database.LOCAL_ID == 0:
 		planet_select(planetname,Database.LOCAL_USERNAME)
-		$"../..".client.send_match_state(Database.PLANETS,3)
+		client.send_match_state(Database.PLANETS,3)
 	elif Database.LOCAL_ID == 1:
-		$"../..".client.send_match_state({"PLANET":planetname,"USERNAME":Database.LOCAL_USERNAME},4)
+		client.send_match_state({"PLANET":planetname,"USERNAME":Database.LOCAL_USERNAME},4)

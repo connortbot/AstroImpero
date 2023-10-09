@@ -92,8 +92,10 @@ func _ready() -> void:
 	sector_list = []
 	planet_list = []
 	battle_list = []
+	var ignore_list = ["GalaxyModel","BlackHole","Anomaly","Anomaly2","MapEnv"]
 	for child in get_node("../Galaxy").get_children():
-		if child.name != "GalaxyModel" and child.name != "BlackHole":
+		if not ignore_list.has(child.name):
+			print(child.name)
 			if "Sector" in child.name:
 				sector_list.append(child.get_child(0).get_child(0))
 			elif "BATTLE" in child.name:

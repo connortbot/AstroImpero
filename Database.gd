@@ -124,14 +124,8 @@ var GALACTIC_DATA = {
 		}
 	}
 }
-class MapAStar:
-	extends AStar
-	func _compute_cost(u,v):
-		return 1
-	func _estimate_cost(u, v):
-		return 0
 
-var MAP = MapAStar.new()
+var MAP = AStar.new()
 func map():
 	MAP.add_point(1,Vector3(-5,1,50)) #Anaxes
 	MAP.add_point(2,Vector3(-45,6,34)) #Agumuun
@@ -148,6 +142,8 @@ func map():
 
 	MAP.connect_points(3,1,true)
 	MAP.connect_points(5,4,true)
+	var path = MAP.get_id_path(1,6)
+	print(path)
 	#MISSING: Edavellir, Sol, Fol, Pol, Ustoh, Naivoh, Yaowei, Hestea, Hosharri
 
 # generating a lane -> midpoint = (-25,3.5,42)

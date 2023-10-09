@@ -12,6 +12,7 @@ signal log_update(text)
 signal start_game_org()
 
 var client: Node
+onready var root = get_tree().get_root()
 
 
 ## VAR: packets
@@ -116,8 +117,11 @@ var main_scene = preload("res://Main.tscn")
 # => USER: host/client
 # => RESULT: Calls start_game_org() on both
 func start_loading_game():
-	get_tree().get_root().add_child(main_scene.instance())
-	client = get_tree().get_root().get_child(3).get_child(1)
+	var main = main_scene.instance()
+	root.add_child(main)
+	main.set_owner(root)
+	root.get_child(5).queue_free()
+	client = root.get_child(3).get_child(1)
 	emit_signal("start_game_org")
 
 
@@ -151,7 +155,7 @@ func check_for_losers(possible_loser_ID,possible_loser_username):
 				emit_signal("log_update",Database.PLAYERS[1][0]+" has conquered all other empires!")
 			winnerID = active_id
 		emit_signal("win_screen",winnerID)
-		get_tree().get_root().get_child(5).deactivate_console()
+		root.get_child(5).deactivate_console()
 ### UPDATING FUNCTIONS ###
 #Manages resources amount, connected to ResourcesPanel script
 signal update_stats(id,amount,type)
@@ -319,8 +323,15 @@ func next_player(ender_id):
 	resolve_resources(active_id)  #updates players, using galactic data, battle queue, supply system
 	resolve_repairs_and_moves() #updates galactic data, using galactic data, battle queue, players
 	emit_signal("refresh_ui",active_id)
-	client.send_match_state({},10)
-	
+	client.send_match_state({"active_id": active_id},10)
+
+func deterministicTurnUpdate(active_id):
+	resolve_supply_system()
+	resolve_battles(active_id)
+	resolve_player_queue(active_id)
+	resolve_resources(active_id)
+	resolve_repairs_and_moves()
+	emit_signal("refresh_ui",active_id)
 
 ### RESOLVE GAME STATE FUNCTIONS ###
 
@@ -372,7 +383,200 @@ func resolve_supply_system():
 	Database.SUPPLY_SYSTEM[1]["SUPPLIER_SCORE"] = p2_score
 	Database.SUPPLY_SYSTEM[0]["SUPPLY_LOSS"] = p1_supplyloss
 	Database.SUPPLY_SYSTEM[1]["SUPPLY_LOSS"] = p2_supplyloss
-	
+
+## (resolve_battles) Resolves battles and corresponding stats per turn
+# @param - active_id: active player ID
+# => USER: host/client
+# => RESULT: Updates BATTLE_QUEUE, SUPPLY_SYSTEM
+func resolve_battles(active_id):
+	var rands_index = 0
+	#### SUPPLY PENALTY ####
+	var p1_supply_output
+	var p2_supply_output
+	if float(Database.SUPPLY_SYSTEM[0]["QUOTA"]) != 0.0:
+		p1_supply_output = float(Database.SUPPLY_SYSTEM[0]["SUPPLIER_SCORE"])/float(Database.SUPPLY_SYSTEM[0]["QUOTA"])
+	else:
+		p1_supply_output = 10.0
+	if float(Database.SUPPLY_SYSTEM[1]["QUOTA"]) != 0.0:
+		p2_supply_output = float(Database.SUPPLY_SYSTEM[1]["SUPPLIER_SCORE"])/float(Database.SUPPLY_SYSTEM[1]["QUOTA"])
+	else:
+		p2_supply_output = 10.0
+	var p1_supply_modifier = 1.0
+	var p2_supply_modifier = 1.0
+	if p1_supply_output < 1.0: #penalty
+		p1_supply_modifier = (1.0-p1_supply_output)
+	elif p1_supply_output > 1.0:
+		p1_supply_modifier = p1_supply_output*0.1
+	if p2_supply_output < 1.0: #penalty
+		p2_supply_modifier = (1.0-p2_supply_output)
+	elif p2_supply_output > 1.0:
+		p2_supply_modifier = p2_supply_output*0.1
+	#### NAVAL BATTLES ####
+	for battle in Database.BATTLE_QUEUE.keys():
+		var sidesID = []
+		for side in Database.BATTLE_QUEUE[battle].keys():
+			sidesID.append(side)
+		var side1ATK = 0
+		var side2ATK = 0
+		#Find the total attack per side
+		var SIDE
+		for s in range(0,2):
+			if s == 0:
+				if (Database.LOCAL_ID == 0):
+					var rng = RandomNumberGenerator.new()
+					rng.seed = hash("cockandballslmao")
+					rng.randomize()
+					SIDE = rng.randi_range(0,1)
+					Database.evasion_rands.append(SIDE)
+				else:
+					SIDE = Database.evasion_rands[rands_index]
+					rands_index += 1
+			else:
+				if SIDE == 0:
+					SIDE = 1
+				else:
+					SIDE = 0
+			for ship in Database.BATTLE_QUEUE[battle][SIDE].keys():
+				if SIDE == sidesID[0]:
+					var shipATK = Database.BATTLE_QUEUE[battle][SIDE][ship]["ATTACK"]*p1_supply_modifier#multiplied by modifiers
+					side1ATK += shipATK
+					Database.BATTLE_QUEUE[battle][SIDE][ship]["RECENT_DAMAGE_OUTPUT"] = shipATK
+				if SIDE == sidesID[1]:
+					var shipATK = Database.BATTLE_QUEUE[battle][SIDE][ship]["ATTACK"]*p2_supply_modifier#multiplied by modifiers
+					side2ATK += shipATK
+					Database.BATTLE_QUEUE[battle][SIDE][ship]["RECENT_DAMAGE_OUTPUT"] = shipATK
+		#Deal damage
+		for side in Database.BATTLE_QUEUE[battle].keys():
+			for ship in Database.BATTLE_QUEUE[battle][side].keys():
+				var evasion = Database.BATTLE_QUEUE[battle][side][ship]["EVASION"]
+				var armor = Database.BATTLE_QUEUE[battle][side][ship]["ARMOR"]
+				if side == 0:
+					armor = armor*p1_supply_modifier
+				elif side == 1:
+					armor = armor*p2_supply_modifier
+				var aps = 0
+				if side == sidesID[0]:
+					#attack per ship
+					aps = side2ATK/Database.BATTLE_QUEUE[battle][side].keys().size()
+				if side == sidesID[1]:
+					aps = side1ATK/Database.BATTLE_QUEUE[battle][side].keys().size()
+				var dmg = 0
+				if Database.LOCAL_ID == 0:
+					randomize()
+					var evasion_randf = randf()
+					Database.evasion_rands.append(evasion_randf)
+					if evasion_randf > evasion: #gets number from 0-1, if its above evasion then we did not evade
+						dmg = aps*(1.0-armor)
+				else:
+					if Database.evasion_rands[rands_index] > evasion:
+						dmg = aps*(1.0-armor)
+					rands_index += 1
+				Database.BATTLE_QUEUE[battle][side][ship]["HEALTH"] -= dmg
+				Database.BATTLE_QUEUE[battle][side][ship]["RECENT_TAKEN_DAMAGE"] = dmg
+				if Database.BATTLE_QUEUE[battle][side][ship]["HEALTH"] <= 0:
+					Database.BATTLE_QUEUE[battle][side].erase(ship)
+					#!!!!ship dead message
+					InventoryManager.remove_ship(ship)
+					#remove from invasions
+					for landbattle in Database.LAND_QUEUE.keys():
+						if ship in Database.LAND_QUEUE[landbattle][0]:
+							Database.LAND_QUEUE[landbattle][0].erase(ship)
+			if Database.BATTLE_QUEUE[battle][side].size() == 0: #all of one sides ships are gone
+				if active_id == side: #current player lost
+					emit_signal("log_update","You lost the battle of Sector "+str(battle)+".")
+				else: #show to other player, current player won
+					emit_signal("log_update","You won the battle of Sector "+str(battle)+".")
+				#Give Damaged penalty to everyone that won (10%)
+				var winnerIDs = []
+				var winnerID = 0
+				for s in Database.BATTLE_QUEUE[battle].keys():
+					if s != side: #this is NOT the side that has no ships left: the winners
+						winnerID = s
+						for ship in Database.BATTLE_QUEUE[battle][s].keys():
+							winnerIDs.append(ship)
+				for id in winnerIDs:
+					for solar in Database.GALACTIC_DATA.keys():
+						for object in Database.GALACTIC_DATA[solar].keys():
+							if object == id:
+								Database.GALACTIC_DATA[solar][object]["MAX_HEALTH"] = Database.GALACTIC_DATA[solar][object]["MAX_HEALTH"]*0.9
+								Database.GALACTIC_DATA[solar][object]["HEALTH"] = Database.GALACTIC_DATA[solar][object]["HEALTH"]*0.9
+								if active_id == winnerID:
+									emit_signal("log_update","Remaining ships are damaged, and require full repairs.")
+				Database.BATTLE_QUEUE.erase(battle)
+				break
+	if (Database.LOCAL_ID == 0):
+		client.send_match_state({"EVASION_RANDS": Database.evasion_rands},9)
+	Database.evasion_rands = []
+	#### LAND BATTLES ####
+	for battle in Database.LAND_QUEUE.keys():
+		if (Database.global_turn_counter - Database.LAND_QUEUE[battle][2]) >= 4:
+			#its been 4 turns since the battle started
+			var side1_warscore = 0 
+			var side2_warscore = 0
+			var battalions = 0
+			var legions = 0
+			var ids = [0,0]
+			for ship in Database.LAND_QUEUE[battle][0]: #for all the ships on side 1
+				for solar in Database.GALACTIC_DATA.keys():
+					for object in Database.GALACTIC_DATA[solar].keys():
+						if "-" in object and object == ship: #its a ship
+							battalions += Database.GALACTIC_DATA[solar][object]["BATTALIONS"]
+							legions += Database.GALACTIC_DATA[solar][object]["LEGIONS"]
+							ids[0] = Database.GALACTIC_DATA[solar][object]["OWNER"]
+			side1_warscore = (100*battalions)+(500*legions)*p1_supply_modifier
+			battalions = 0
+			legions = 0
+			for garrison in Database.LAND_QUEUE[battle][1]:
+				for solar in Database.GALACTIC_DATA.keys():
+					for object in Database.GALACTIC_DATA[solar].keys():
+						if object == battle:
+							for building in Database.GALACTIC_DATA[solar][object].keys():
+								if building != "Owner" and building != "building_slots":
+									var building_tags = building.split("-")
+									if building_tags[1] == "GARRISON":
+										battalions += Database.GALACTIC_DATA[solar][object][building]["BATTALIONS"]
+										ids[1] = Database.GALACTIC_DATA[solar][object][building]["OWNER"]
+			if Database.LAND_QUEUE[battle][1].size() == 0: #undefended planet
+				for solar in Database.GALACTIC_DATA.keys():
+					for object in Database.GALACTIC_DATA[solar].keys():
+						if object == battle: #correct planet
+							for ID in Database.PLAYERS.keys():
+								if Database.GALACTIC_DATA[solar][object]["Owner"] == Database.PLAYERS[ID][0]:
+									ids[1] = ID
+			side2_warscore = (100*battalions)+(500*legions)*p2_supply_modifier
+			if side1_warscore == side2_warscore:
+				emit_signal("log_update","The Battle of "+battle+" is at a stalemate. The siege continues...")
+				Database.LAND_QUEUE[battle][2] = Database.global_turn_counter #resets, we'll have to wait another 4 turns
+				return
+			if side2_warscore > side1_warscore: #DEFENDERS WIN
+				#message to defenders
+				if ids[1] == active_id: #current player is defender
+					emit_signal("log_update","Successfully defended against the Siege of "+battle+".")
+				else:
+					emit_signal("log_update","The invasion of "+battle+" has failed.")
+				Database.LAND_QUEUE.erase(battle)
+			if side1_warscore > side2_warscore: #ATTACKERS WIN!!! WOOO??
+				#message to defenders
+				if ids[0] == active_id: #current player is attacker
+					emit_signal("log_update","Successfully invaded and capitulated "+battle+"!")
+					emit_signal("log_update","Gained control of the planet and subsequent buildings.")
+				else:
+					emit_signal("log_update",battle+" has capitulated to an invasion.")
+				#message to attackers
+				for solar in Database.GALACTIC_DATA.keys():
+					for object in Database.GALACTIC_DATA[solar].keys():
+						if not "-" in object: #is a planet
+							if object == battle:
+								Database.GALACTIC_DATA[solar][object]["Owner"] = Database.PLAYERS[ids[0]][0]
+								for building in Database.GALACTIC_DATA[solar][object].keys():
+									if building != "Owner" and building != "building_slots":
+										Database.GALACTIC_DATA[solar][object][building]["OWNER"] == ids[0]
+				Database.LAND_QUEUE.erase(battle)
+				check_for_losers(ids[1],Database.PLAYERS[ids[1]][0])
+		else:
+			emit_signal("log_update","The Siege of "+battle+" will finish in "+str(4-(Database.global_turn_counter - Database.LAND_QUEUE[battle][2]))+" turns.")
+
+
 func resolve_player_queue(id):
 	var current_turn = Database.global_turn_counter
 	#### RESOLVE BUILDING ####
@@ -471,6 +675,7 @@ func resolve_player_queue(id):
 			#this entry in production is not active!
 			Database.PRODUCTION_QUEUE[id]["active_production"].append([product[0],current_turn,product[2],product[1]])
 			emit_signal("log_update","Started production on "+str(product[1])+" "+product[0]+"(s).")
+
 func resolve_resources(id): 
 	var fuel_change = 0
 	var metals_change = 0
@@ -516,190 +721,6 @@ func resolve_resources(id):
 	emit_signal("log_update","Industrial reports indicate a fuel change of: "+str(fuel_change)+".")
 	emit_signal("log_update","Industrial reports indicate an energy change of: "+str(energy_change)+".")
 
-
-## (resolve_battles) Resolves battles and corresponding stats per turn
-# @param - active_id: active player ID
-# => USER: host/client
-# => RESULT: Updates BATTLE_QUEUE, SUPPLY_SYSTEM
-func resolve_battles(active_id):
-	#### SUPPLY PENALTY ####
-	var p1_supply_output
-	var p2_supply_output
-	if float(Database.SUPPLY_SYSTEM[0]["QUOTA"]) != 0.0:
-		p1_supply_output = float(Database.SUPPLY_SYSTEM[0]["SUPPLIER_SCORE"])/float(Database.SUPPLY_SYSTEM[0]["QUOTA"])
-	else:
-		p1_supply_output = 10.0
-	if float(Database.SUPPLY_SYSTEM[1]["QUOTA"]) != 0.0:
-		p2_supply_output = float(Database.SUPPLY_SYSTEM[1]["SUPPLIER_SCORE"])/float(Database.SUPPLY_SYSTEM[1]["QUOTA"])
-	else:
-		p2_supply_output = 10.0
-	var p1_supply_modifier = 1.0
-	var p2_supply_modifier = 1.0
-	if p1_supply_output < 1.0: #penalty
-		p1_supply_modifier = (1.0-p1_supply_output)
-	elif p1_supply_output > 1.0:
-		p1_supply_modifier = p1_supply_output*0.1
-	if p2_supply_output < 1.0: #penalty
-		p2_supply_modifier = (1.0-p2_supply_output)
-	elif p2_supply_output > 1.0:
-		p2_supply_modifier = p2_supply_output*0.1
-	#### NAVAL BATTLES ####
-	for battle in Database.BATTLE_QUEUE.keys():
-		var sidesID = []
-		for side in Database.BATTLE_QUEUE[battle].keys():
-			sidesID.append(side)
-		var side1ATK = 0
-		var side2ATK = 0
-		#Find the total attack per side
-		var SIDE
-		for s in range(0,2):
-			if s == 0:
-				var rng = RandomNumberGenerator.new()
-				rng.seed = hash("cockandballslmao")
-				rng.randomize()
-				SIDE = rng.randi_range(0,1)
-			else:
-				if SIDE == 0:
-					SIDE = 1
-				else:
-					SIDE = 0
-			for ship in Database.BATTLE_QUEUE[battle][SIDE].keys():
-				if SIDE == sidesID[0]:
-					var shipATK = Database.BATTLE_QUEUE[battle][SIDE][ship]["ATTACK"]*p1_supply_modifier#multiplied by modifiers
-					side1ATK += shipATK
-					Database.BATTLE_QUEUE[battle][SIDE][ship]["RECENT_DAMAGE_OUTPUT"] = shipATK
-				if SIDE == sidesID[1]:
-					var shipATK = Database.BATTLE_QUEUE[battle][SIDE][ship]["ATTACK"]*p2_supply_modifier#multiplied by modifiers
-					side2ATK += shipATK
-					Database.BATTLE_QUEUE[battle][SIDE][ship]["RECENT_DAMAGE_OUTPUT"] = shipATK
-		#Deal damage
-		var ship_index = 0
-		for side in Database.BATTLE_QUEUE[battle].keys():
-			for ship in Database.BATTLE_QUEUE[battle][side].keys():
-				var evasion = Database.BATTLE_QUEUE[battle][side][ship]["EVASION"]
-				var armor = Database.BATTLE_QUEUE[battle][side][ship]["ARMOR"]
-				if side == 0:
-					armor = armor*p1_supply_modifier
-				elif side == 1:
-					armor = armor*p2_supply_modifier
-				var aps = 0
-				if side == sidesID[0]:
-					#attack per ship
-					aps = side2ATK/Database.BATTLE_QUEUE[battle][side].keys().size()
-				if side == sidesID[1]:
-					aps = side1ATK/Database.BATTLE_QUEUE[battle][side].keys().size()
-				var dmg = 0
-				if Database.LOCAL_ID == 0:
-					randomize()
-					Database.evasion_rands.append(randf())
-					if randf() > evasion: #gets number from 0-1, if its above evasion then we did not evade
-						dmg = aps*(1.0-armor)
-				else:
-					if Database.evasion_rands[ship_index] > evasion:
-						dmg = aps*(1.0-armor)
-					ship_index += 1
-				Database.BATTLE_QUEUE[battle][side][ship]["HEALTH"] -= dmg
-				Database.BATTLE_QUEUE[battle][side][ship]["RECENT_TAKEN_DAMAGE"] = dmg
-				if Database.BATTLE_QUEUE[battle][side][ship]["HEALTH"] <= 0:
-					Database.BATTLE_QUEUE[battle][side].erase(ship)
-					#!!!!ship dead message
-					InventoryManager.remove_ship(ship)
-					#remove from invasions
-					for landbattle in Database.LAND_QUEUE.keys():
-						if ship in Database.LAND_QUEUE[landbattle][0]:
-							Database.LAND_QUEUE[landbattle][0].erase(ship)
-			if Database.BATTLE_QUEUE[battle][side].size() == 0: #all of one sides ships are gone
-				if active_id == side: #current player lost
-					emit_signal("log_update","You lost the battle of Sector "+str(battle)+".")
-				else: #show to other player, current player won
-					emit_signal("log_update","You won the battle of Sector "+str(battle)+".")
-				#Give Damaged penalty to everyone that won (10%)
-				var winnerIDs = []
-				var winnerID = 0
-				for s in Database.BATTLE_QUEUE[battle].keys():
-					if s != side: #this is NOT the side that has no ships left: the winners
-						winnerID = s
-						for ship in Database.BATTLE_QUEUE[battle][s].keys():
-							winnerIDs.append(ship)
-				for id in winnerIDs:
-					for solar in Database.GALACTIC_DATA.keys():
-						for object in Database.GALACTIC_DATA[solar].keys():
-							if object == id:
-								Database.GALACTIC_DATA[solar][object]["MAX_HEALTH"] = Database.GALACTIC_DATA[solar][object]["MAX_HEALTH"]*0.9
-								Database.GALACTIC_DATA[solar][object]["HEALTH"] = Database.GALACTIC_DATA[solar][object]["HEALTH"]*0.9
-								if active_id == winnerID:
-									emit_signal("log_update","Remaining ships are damaged, and require full repairs.")
-				Database.BATTLE_QUEUE.erase(battle)
-				break
-	client.send_match_state({"EVASION_RANDS": Database.evasion_rands},9)
-	#### LAND BATTLES ####
-	for battle in Database.LAND_QUEUE.keys():
-		if (Database.global_turn_counter - Database.LAND_QUEUE[battle][2]) >= 4:
-			#its been 4 turns since the battle started
-			var side1_warscore = 0 
-			var side2_warscore = 0
-			var battalions = 0
-			var legions = 0
-			var ids = [0,0]
-			for ship in Database.LAND_QUEUE[battle][0]: #for all the ships on side 1
-				for solar in Database.GALACTIC_DATA.keys():
-					for object in Database.GALACTIC_DATA[solar].keys():
-						if "-" in object and object == ship: #its a ship
-							battalions += Database.GALACTIC_DATA[solar][object]["BATTALIONS"]
-							legions += Database.GALACTIC_DATA[solar][object]["LEGIONS"]
-							ids[0] = Database.GALACTIC_DATA[solar][object]["OWNER"]
-			side1_warscore = (100*battalions)+(500*legions)*p1_supply_modifier
-			battalions = 0
-			legions = 0
-			for garrison in Database.LAND_QUEUE[battle][1]:
-				for solar in Database.GALACTIC_DATA.keys():
-					for object in Database.GALACTIC_DATA[solar].keys():
-						if object == battle:
-							for building in Database.GALACTIC_DATA[solar][object].keys():
-								if building != "Owner" and building != "building_slots":
-									var building_tags = building.split("-")
-									if building_tags[1] == "GARRISON":
-										battalions += Database.GALACTIC_DATA[solar][object][building]["BATTALIONS"]
-										ids[1] = Database.GALACTIC_DATA[solar][object][building]["OWNER"]
-			if Database.LAND_QUEUE[battle][1].size() == 0: #undefended planet
-				for solar in Database.GALACTIC_DATA.keys():
-					for object in Database.GALACTIC_DATA[solar].keys():
-						if object == battle: #correct planet
-							for ID in Database.PLAYERS.keys():
-								if Database.GALACTIC_DATA[solar][object]["Owner"] == Database.PLAYERS[ID][0]:
-									ids[1] = ID
-			side2_warscore = (100*battalions)+(500*legions)*p2_supply_modifier
-			if side1_warscore == side2_warscore:
-				emit_signal("log_update","The Battle of "+battle+" is at a stalemate. The siege continues...")
-				Database.LAND_QUEUE[battle][2] = Database.global_turn_counter #resets, we'll have to wait another 4 turns
-				return
-			if side2_warscore > side1_warscore: #DEFENDERS WIN
-				#message to defenders
-				if ids[1] == active_id: #current player is defender
-					emit_signal("log_update","Successfully defended against the Siege of "+battle+".")
-				else:
-					emit_signal("log_update","The invasion of "+battle+" has failed.")
-				Database.LAND_QUEUE.erase(battle)
-			if side1_warscore > side2_warscore: #ATTACKERS WIN!!! WOOO??
-				#message to defenders
-				if ids[0] == active_id: #current player is attacker
-					emit_signal("log_update","Successfully invaded and capitulated "+battle+"!")
-					emit_signal("log_update","Gained control of the planet and subsequent buildings.")
-				else:
-					emit_signal("log_update",battle+" has capitulated to an invasion.")
-				#message to attackers
-				for solar in Database.GALACTIC_DATA.keys():
-					for object in Database.GALACTIC_DATA[solar].keys():
-						if not "-" in object: #is a planet
-							if object == battle:
-								Database.GALACTIC_DATA[solar][object]["Owner"] = Database.PLAYERS[ids[0]][0]
-								for building in Database.GALACTIC_DATA[solar][object].keys():
-									if building != "Owner" and building != "building_slots":
-										Database.GALACTIC_DATA[solar][object][building]["OWNER"] == ids[0]
-				Database.LAND_QUEUE.erase(battle)
-				check_for_losers(ids[1],Database.PLAYERS[ids[1]][0])
-		else:
-			emit_signal("log_update","The Siege of "+battle+" will finish in "+str(4-(Database.global_turn_counter - Database.LAND_QUEUE[battle][2]))+" turns.")
 func resolve_repairs_and_moves():
 	for solar in Database.GALACTIC_DATA.keys():
 		if not solar in Database.BATTLE_QUEUE.keys():

@@ -19,6 +19,7 @@ func _ready() -> void:
 	client.connect("received_usernames_from_host",$LobbyMenu/LobbyMenu,"received_usernames_from_host")
 	client.connect("client_planet_selection",$LobbyMenu/LobbyMenu,"client_planet_selection")
 	client.connect("update_planetslist",$LobbyMenu/LobbyMenu,"update_planetslist")
+	$"LobbyMenu/LobbyMenu".client = client
 	Database.reset()
 	$AnimationPlayer.play("1 FadeIn")
 	second_anim = "2 Start"
